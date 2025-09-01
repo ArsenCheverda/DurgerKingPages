@@ -2,20 +2,16 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <!-- Важливо для коректного відображення в мобільних додатках -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, user-scalable=no">
     <title>Durger King - Mini App</title>
     
-    <!-- Скрипти -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 
     <style>
-        /* Використання системного шрифту для кращої інтеграції */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            /* Кольори теми з Telegram */
             background-color: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
             margin: 0;
@@ -35,30 +31,54 @@
             display: flex;
         }
 
-        /* Динамічна сітка товарів */
+        /* Оновлена сітка для товарів */
         #catalog-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
             width: 100%;
         }
 
         .product-card {
             background-color: var(--tg-theme-secondary-bg-color, #f2f2f2);
             border-radius: 12px;
-            padding: 10px;
+            padding: 8px;
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
+            width: 105px; /* Фіксована ширина для 3-х колонок */
         }
 
         .product-card lottie-player {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 8px;
+            width: 70px;
+            height: 70px;
+            margin-bottom: 5px;
             cursor: pointer;
+        }
+        
+        /* Скелет завантаження */
+        #skeleton-loader {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+        }
+        .skeleton-card {
+            width: 105px;
+            height: 180px; /* Приблизна висота картки товару */
+            border-radius: 12px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite linear;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         .item-badge {
@@ -88,7 +108,6 @@
             text-transform: uppercase;
         }
 
-        /* Ефект мерехтіння для кнопок */
         .shimmer-btn {
             position: relative;
             overflow: hidden;
@@ -114,7 +133,6 @@
             100% { left: 150%; }
         }
         
-        /* Модальне вікно для покупки за зірочки */
         #star-modal {
             position: fixed;
             inset: 0;
@@ -125,6 +143,7 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 100;
         }
         #star-modal.visible {
             opacity: 1;
@@ -148,8 +167,23 @@
 
     <!-- Сторінка 1: Каталог -->
     <div id="catalog-page" class="page active">
-        <div id="catalog-grid">
-            <!-- Товари будуть додані сюди через JavaScript -->
+        <div id="skeleton-loader"></div>
+        <div id="catalog-grid" style="display: none;"></div>
+    </div>
+
+    <!-- Сторінка 2: Замовлення -->
+    <div id="order-page" class="page">
+        <div class="w-full">
+            <h2 class="text-xl font-bold mb-4">YOUR ORDER</h2>
+            <div id="order-list" class="space-y-4">
+                <!-- Сюди додаються товари з кошика -->
+            </div>
+             <div class="mt-6 border-t pt-4">
+                <div class="flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span id="order-total-price">$0.00</span>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -174,45 +208,52 @@
 
         // --- ДАНІ ---
         const products = [
-            { id: 1, name: 'Cake', price: 1, lottieUrl: 'https://assets10.lottiefiles.com/packages/lf20_cnfe4o2s.json', isNew: true, isStar: true },
-            { id: 2, name: 'Burger', price: 4.99, lottieUrl: 'https://assets6.lottiefiles.com/packages/lf20_v0h5i7lt.json', isNew: false },
-            { id: 3, name: 'Fries', price: 1.49, lottieUrl: 'https://assets4.lottiefiles.com/packages/lf20_jpxs3k2a.json', isNew: false },
-            { id: 4, name: 'Hotdog', price: 3.49, lottieUrl: 'https://assets8.lottiefiles.com/packages/lf20_xwcg9xlf.json', isNew: false },
-            { id: 5, name: 'Taco', price: 3.99, lottieUrl: 'https://assets4.lottiefiles.com/packages/lf20_b3xikwqs.json', isNew: false },
-            { id: 6, name: 'Pizza', price: 7.99, lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_vln1e9m9.json', isNew: false },
-            { id: 7, name: 'Donut', price: 1.49, lottieUrl: 'https://assets5.lottiefiles.com/packages/lf20_2rjx7aef.json', isNew: false },
-            { id: 8, name: 'Popcorn', price: 1.99, lottieUrl: 'https://assets6.lottiefiles.com/packages/lf20_z4s3d4rz.json', isNew: false },
-            { id: 9, name: 'Coke', price: 1.49, lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_a2edpgyt.json', isNew: false },
-            { id: 10, name: 'Icecream', price: 5.99, lottieUrl: 'https://assets7.lottiefiles.com/packages/lf20_pr0kgnwb.json', isNew: false },
-            { id: 11, name: 'Cookie', price: 3.99, lottieUrl: 'https://assets4.lottiefiles.com/packages/lf20_sl0tor3g.json', isNew: false },
-            { id: 12, name: 'Flan', price: 7.99, lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_rsj3i2gm.json', isNew: false },
+            { id: 1, name: 'Cake', price: 1, lottieUrl: 'https://lottie.host/b2896694-a719-4993-8a03-99713be85135/Q1aJ0i5ksm.json', isNew: true, isStar: true },
+            { id: 2, name: 'Burger', price: 4.99, lottieUrl: 'https://lottie.host/997b6b1a-2123-48b4-9005-a05c48b64a27/uTSpSTp2tM.json', isNew: false },
+            { id: 3, name: 'Fries', price: 1.49, lottieUrl: 'https://lottie.host/813337e7-a979-4a94-8461-46328739a8dc/2mJ2Q43sQ6.json', isNew: false },
+            { id: 4, name: 'Hotdog', price: 3.49, lottieUrl: 'https://lottie.host/02005a76-2581-426d-886f-124d8ac854c8/1S6Wp19LzB.json', isNew: false },
+            { id: 5, name: 'Taco', price: 3.99, lottieUrl: 'https://lottie.host/e3529a6b-e526-4448-8e65-27a36fbc573e/l5W4DMj1jE.json', isNew: false },
+            { id: 6, name: 'Pizza', price: 7.99, lottieUrl: 'https://lottie.host/27dd05b0-7b3b-47e2-a08b-a79015d862f6/r95sYmS2Wj.json', isNew: false },
+            { id: 7, name: 'Donut', price: 1.49, lottieUrl: 'https://lottie.host/81617b0f-a42e-43b9-ab5d-209277083049/2u5j82A97w.json', isNew: false },
+            { id: 8, name: 'Popcorn', price: 1.99, lottieUrl: 'https://lottie.host/be7755f4-3435-4235-8597-9e73b22b10a2/I5CnVU8jL1.json', isNew: false },
+            { id: 9, name: 'Coke', price: 1.49, lottieUrl: 'https://lottie.host/9bc1c676-429a-4786-8924-f7725e6e87a2/uB2nzn4j37.json', isNew: false },
+            { id: 10, name: 'Icecream', price: 5.99, lottieUrl: 'https://lottie.host/a08c0f5f-0749-41bc-993d-8e7c10d3f86e/7F1JgKMnlr.json', isNew: false },
+            { id: 11, name: 'Cookie', price: 3.99, lottieUrl: 'https://lottie.host/e2c34015-a131-419a-9e20-7f28cb11c15f/a7vEATkM6T.json', isNew: false },
+            { id: 12, name: 'Flan', price: 7.99, lottieUrl: 'https://lottie.host/79a8383e-3645-424a-89a1-5d07a164b85c/dBlfM1kY1D.json', isNew: false },
         ];
 
         // --- СТАН ---
-        let cart = {}; // { productId: quantity }
+        let cart = {};
+        let currentPage = 'catalog-page';
 
         // --- DOM ЕЛЕМЕНТИ ---
+        const pages = document.querySelectorAll('.page');
+        const skeletonLoader = document.getElementById('skeleton-loader');
         const catalogGrid = document.getElementById('catalog-grid');
+        const orderList = document.getElementById('order-list');
+        const orderTotalPrice = document.getElementById('order-total-price');
         const starModal = document.getElementById('star-modal');
         const modalLottie = document.getElementById('modal-lottie');
         const modalProductName = document.getElementById('modal-product-name');
         const confirmStarPaymentBtn = document.getElementById('confirm-star-payment');
 
-
         // --- ФУНКЦІЇ ВІДОБРАЖЕННЯ ---
+        function renderSkeleton() {
+            let skeletonHtml = '';
+            for (let i = 0; i < 12; i++) {
+                skeletonHtml += '<div class="skeleton-card"></div>';
+            }
+            skeletonLoader.innerHTML = skeletonHtml;
+        }
+
         function renderCatalog() {
             catalogGrid.innerHTML = '';
             products.forEach(product => {
                 const quantity = cart[product.id] || 0;
-
                 const buttonHtml = product.isStar 
-                ? `
-                    <button class="w-full mt-2 h-10 rounded-lg text-sm font-bold shimmer-btn" style="background-color: #27ae60;" onclick="buyWithStars(${product.id})">
-                        BUY
-                    </button>
-                `
+                ? `<button class="w-full mt-2 h-9 rounded-lg text-sm font-bold shimmer-btn" style="background-color: #27ae60;" onclick="buyWithStars(${product.id})">BUY</button>`
                 : `
-                <div class="w-full mt-2 h-10 relative">
+                <div class="w-full mt-2 h-9 relative">
                     <button class="absolute left-0 top-0 h-full w-[48%] rounded-lg text-white text-xl font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}" style="background-color: #e74c3c;" onclick="removeFromCart(${product.id})">-</button>
                     <div class="absolute right-0 top-0 h-full rounded-lg text-white font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'w-[48%]' : 'w-full'}" style="background-color: #f39c12;">
                         <span class="absolute inset-0 flex items-center justify-center text-sm transition-opacity duration-150 ${quantity > 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}" onclick="addToCart(${product.id})">ADD</span>
@@ -228,7 +269,7 @@
                         ${quantity > 0 ? `<div class="item-badge">${quantity}</div>` : ''}
                     </div>
                     <div>
-                        <div class="font-semibold text-sm flex items-center justify-center space-x-1">
+                        <div class="font-semibold text-xs flex items-center justify-center space-x-1 h-8">
                             <span>${product.name}</span>
                             ${product.isNew ? `<span class="new-badge">NEW</span>` : ''}
                             ${product.isStar ? `<span class="text-yellow-400 text-xs">★</span>` : ''}
@@ -240,11 +281,56 @@
                     ${buttonHtml}
                 `;
                 catalogGrid.appendChild(itemHtml);
-                
                 const lottiePlayer = itemHtml.querySelector('lottie-player');
                 lottiePlayer.addEventListener('click', () => lottiePlayer.play());
             });
             updateMainButton();
+        }
+
+        function renderOrder() {
+            let orderHtml = '';
+            const total = calculateTotal();
+            if (total.items === 0) {
+                orderHtml = '<p class="text-center text-gray-500">Your order is empty.</p>';
+            } else {
+                const itemHtmls = [];
+                for (const productId in cart) {
+                    const product = products.find(p => p.id == productId);
+                    if (product) {
+                        const quantity = cart[productId];
+                        const itemTotal = product.price * quantity;
+                        itemHtmls.push(`
+                            <div class="flex items-center">
+                                 <lottie-player src="${product.lottieUrl}" autoplay loop style="width: 50px; height: 50px; margin-right: 15px;"></lottie-player>
+                                <div class="flex-grow">
+                                    <p class="font-bold">${product.name} <span class="text-gray-500 font-normal">x${quantity}</span></p>
+                                </div>
+                                <div class="font-semibold">$${itemTotal.toFixed(2)}</div>
+                            </div>`);
+                    }
+                }
+                orderHtml = itemHtmls.join('');
+            }
+            orderList.innerHTML = orderHtml;
+            orderTotalPrice.textContent = `$${total.price.toFixed(2)}`;
+        }
+
+        function showPage(pageId) {
+            currentPage = pageId;
+            pages.forEach(page => {
+                page.classList.toggle('active', page.id === pageId);
+            });
+            
+            if (pageId === 'catalog-page') {
+                tg.BackButton.hide();
+                updateMainButton();
+            } else if (pageId === 'order-page') {
+                renderOrder();
+                tg.BackButton.show();
+                const total = calculateTotal();
+                tg.MainButton.setText(`Pay $${total.price.toFixed(2)}`);
+                tg.MainButton.show();
+            }
         }
 
         // --- ЛОГІКА ТА ОБРОБНИКИ ПОДІЙ ---
@@ -254,21 +340,20 @@
         }
 
         function removeFromCart(productId) {
-            if (cart[productId] > 1) {
-                cart[productId]--;
-            } else {
-                delete cart[productId];
-            }
+            if (cart[productId] > 1) cart[productId]--;
+            else delete cart[productId];
             renderCatalog();
         }
 
         function calculateTotal() {
             let total = { price: 0, items: 0 };
             for (const productId in cart) {
-                const product = products.find(p => p.id == productId);
-                const quantity = cart[productId];
-                total.price += product.price * quantity;
-                total.items += quantity;
+                const product = products.find(p => p.id == productId && !p.isStar);
+                if (product) {
+                    const quantity = cart[productId];
+                    total.price += product.price * quantity;
+                    total.items += quantity;
+                }
             }
             return total;
         }
@@ -288,8 +373,6 @@
             modalLottie.load(product.lottieUrl);
             modalProductName.textContent = product.name;
             starModal.classList.add('visible');
-
-            // Зберігаємо ID товару для обробника кнопки
             confirmStarPaymentBtn.dataset.productId = productId;
         }
 
@@ -298,24 +381,10 @@
         }
 
         function handleStarPayment() {
-            const productId = this.dataset.productId;
-            const product = products.find(p => p.id == productId);
-
-            // Це імітація. У реальному додатку вам потрібно буде згенерувати
-            // посилання на інвойс через ваш бекенд та Bot API.
-            const invoiceLink = `https://t.me/invoice/example`; // Замініть на реальне посилання
-            
+            const invoiceLink = `https://t.me/invoice/example`; 
             tg.openInvoice(invoiceLink, (status) => {
-                if (status === 'paid') {
-                    tg.close();
-                } else if (status === 'cancelled') {
-                    tg.showAlert('Payment was cancelled.');
-                } else if (status === 'failed') {
-                    tg.showAlert('Payment failed. Please try again.');
-                }
+                if (status === 'paid') tg.close();
             });
-            
-            // Після виклику інвойсу закриваємо модальне вікно
             closeStarModal();
         }
 
@@ -323,21 +392,36 @@
         document.addEventListener('DOMContentLoaded', () => {
             tg.ready();
             
-            // Налаштування основної кнопки
             tg.MainButton.textColor = '#FFFFFF';
             tg.MainButton.color = '#27ae60';
             tg.MainButton.onClick(() => {
-                const total = calculateTotal();
-                tg.showAlert(`Your order contains ${total.items} items with a total cost of $${total.price.toFixed(2)}.`);
-                // Тут буде логіка переходу на сторінку замовлення
+                if (currentPage === 'catalog-page') {
+                    showPage('order-page');
+                } else if (currentPage === 'order-page') {
+                    const total = calculateTotal();
+                    tg.showAlert(`Final amount to pay: $${total.price.toFixed(2)}`);
+                    // Тут буде логіка реальної оплати
+                }
+            });
+
+            tg.BackButton.onClick(() => {
+                showPage('catalog-page');
             });
 
             confirmStarPaymentBtn.addEventListener('click', handleStarPayment);
 
-            // Рендеримо каталог при завантаженні
-            renderCatalog();
+            renderSkeleton();
+            // Імітуємо невелику затримку завантаження
+            setTimeout(() => {
+                // Спочатку робимо контейнер видимим
+                catalogGrid.style.display = 'flex';
+                // Потім ховаємо завантажувач
+                skeletonLoader.style.display = 'none';
+                // І тільки потім наповнюємо видимий контейнер
+                renderCatalog();
+            }, 500); 
         });
-
     </script>
 </body>
 </html>
+
