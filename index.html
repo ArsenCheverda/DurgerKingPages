@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, user-scalable=no">
+    <title>Durger King - Mini App</title>
+    <!-- Скрипт для интеграции с Telegram -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--tg-theme-bg-color, #f0f2f5);
+            color: var(--tg-theme-text-color, #000000);
+        }
+        .main-container {
+            max-width: 420px;
+            margin: auto;
+            background-color: var(--tg-theme-secondary-bg-color, #ffffff);
+            min-height: 100vh;
+        }
+        .page {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .page.active {
+            display: flex;
+        }
+        .header {
+            background-color: var(--tg-theme-secondary-bg-color, #ffffff);
+            border-bottom: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+        }
+        .item-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #e74c3c;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .new-badge {
+            background-color: #27ae60;
+            color: white;
+            font-size: 0.6rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        .input-error {
+            border-color: #e74c3c !important;
+        }
+        .label-error {
+            color: #e74c3c !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+
+        <!-- ===== Page 1: Catalog ===== -->
+        <div id="catalog-page" class="page active">
+            <div class="header p-4 flex items-center justify-between shadow-sm">
+                <div></div> <!-- Placeholder for balance -->
+                <div class="font-bold text-lg flex items-center">
+                    <span class="bg-red-500 text-white rounded-md w-7 h-7 flex items-center justify-center mr-2 font-bold">D</span>
+                    Durger King
+                </div>
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-plus text-xl text-gray-500 cursor-pointer"></i>
+                </div>
+            </div>
+            <div id="catalog-grid" class="flex-grow p-4 grid grid-cols-2 gap-4 overflow-y-auto">
+                <!-- Product items will be injected here by JavaScript -->
+            </div>
+            <!-- Нижняя панель с кнопкой удалена, т.к. будет использоваться кнопка Telegram -->
+        </div>
+
+        <!-- ===== Page 2: Your Order ===== -->
+        <div id="order-page" class="page">
+             <div class="header p-4 flex items-center justify-between shadow-sm">
+                <!-- Кнопка "назад" будет управляться через Telegram API -->
+                <div class="w-5"></div>
+                 <div class="font-bold text-lg flex items-center">
+                    <span class="bg-red-500 text-white rounded-md w-7 h-7 flex items-center justify-center mr-2 font-bold">D</span>
+                    Durger King
+                </div>
+                <button class="text-green-600 font-semibold" onclick="showPage('catalog-page')">Edit</button>
+            </div>
+            <div class="flex-grow p-4 overflow-y-auto">
+                <h2 class="text-xl font-bold mb-4">YOUR ORDER</h2>
+                <div id="order-list" class="space-y-4">
+                    <!-- Order items will be injected here -->
+                </div>
+                <div class="mt-6">
+                    <label for="comment" class="text-gray-600">Add comment...</label>
+                    <textarea id="comment" rows="3" class="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Any special requests, details, final wishes etc."></textarea>
+                </div>
+            </div>
+             <!-- Нижняя панель удалена -->
+        </div>
+
+        <!-- ===== Page 3: Checkout ===== -->
+        <div id="checkout-page" class="page">
+            <div class="header p-4 flex items-center shadow-sm">
+                <!-- Кнопка "назад" будет управляться через Telegram API -->
+                <div class="w-5"></div>
+                <h2 class="text-lg font-bold flex-grow text-center">Checkout (Test)</h2>
+                <i id="close-checkout-btn" class="fas fa-times text-xl text-gray-500 cursor-pointer"></i>
+            </div>
+            <div class="flex-grow p-4 overflow-y-auto bg-gray-50">
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex items-center">
+                         <div class="text-5xl bg-yellow-400 p-2 rounded-lg mr-4">🍟</div>
+                        <div>
+                            <p class="font-bold">Order #160546591</p>
+                            <p class="text-sm text-gray-500">Perfect Lunch from Durger King.</p>
+                        </div>
+                    </div>
+                    <div id="checkout-summary" class="mt-4 space-y-2 border-t pt-4">
+                        <!-- Checkout items summary here -->
+                    </div>
+                    <div class="flex justify-between font-bold text-lg mt-4 border-t pt-4">
+                        <span>Total</span>
+                        <span id="checkout-total-price">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-sm mt-4">
+                    <div class="flex items-center justify-between cursor-pointer py-2" onclick="showPage('payment-page')">
+                        <div class="flex items-center">
+                            <i class="fas fa-credit-card text-gray-500 w-6 text-center mr-3"></i>
+                            <div id="payment-method-details">
+                                <p class="font-semibold">Payment method</p>
+                                <p id="payment-method-text" class="text-sm text-blue-500">Add payment method</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                     <div class="border-t"></div>
+                    <div class="flex items-center justify-between cursor-pointer py-2" onclick="showPage('shipping-page')">
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt text-gray-500 w-6 text-center mr-3"></i>
+                             <div>
+                                <p class="font-semibold">Shipping address</p>
+                                <p id="shipping-address-text" class="text-sm text-blue-500">Add shipping address</p>
+                            </div>
+                        </div>
+                         <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                     <div class="border-t"></div>
+                    <div id="name-link-block" class="flex items-center justify-between cursor-pointer py-2" onclick="showPage('shipping-page')">
+                         <div class="flex items-center">
+                            <i class="fas fa-user text-gray-500 w-6 text-center mr-3"></i>
+                            <div id="name-placeholder">
+                                 <p class="font-semibold">Name</p>
+                            </div>
+                            <div id="name-details" style="display: none;">
+                                <p id="shipping-name-text" class="font-semibold"></p>
+                                <p id="shipping-phone-text" class="text-sm text-gray-500"></p>
+                            </div>
+                        </div>
+                         <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+             <!-- Нижняя панель удалена -->
+        </div>
+        
+        <!-- ===== Page 4: Payment Info ===== -->
+        <div id="payment-page" class="page">
+             <div class="header p-4 flex items-center shadow-sm">
+                 <div class="w-5"></div>
+                <div class="flex-grow text-center">
+                    <h2 class="text-lg font-bold">Payment info</h2>
+                </div>
+                 <!-- Кнопка "назад" будет управляться через Telegram API -->
+                <i class="fas fa-times text-xl text-gray-500 cursor-pointer" onclick="showPage('checkout-page')"></i>
+            </div>
+            <div id="payment-form" class="flex-grow p-4 overflow-y-auto">
+                <p class="text-blue-600 font-semibold mb-2">Enter your card information</p>
+                <div class="space-y-4 mb-6">
+                    <div class="relative">
+                        <label for="card-number" id="card-number-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600">Card Number</label>
+                        <input type="text" id="card-number" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0000 0000 0000 0000">
+                    </div>
+                    <div class="flex space-x-4">
+                        <div class="relative w-1/2">
+                            <label for="expiry-date" id="expiry-date-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600">Expiry Date</label>
+                            <input type="text" id="expiry-date" placeholder="MM/YY" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div class="relative w-1/2">
+                             <label for="cvc" id="cvc-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-500">CVC</label>
+                            <input type="password" id="cvc" placeholder="•••" class="w-full p-3 border-2 border-gray-300 rounded-lg pr-10 focus:outline-none focus:border-blue-500">
+                            <i class="fas fa-eye absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 cursor-pointer" id="toggle-cvc"></i>
+                        </div>
+                    </div>
+                     <div class="relative">
+                        <label for="cardholder-name" id="cardholder-name-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600">Cardholder Name</label>
+                        <input type="text" id="cardholder-name" placeholder="Cardholder Name" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <p class="text-blue-600 font-semibold mb-2">Enter your billing address</p>
+                 <div class="space-y-4">
+                    <div class="relative">
+                        <label for="country" id="country-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600">Country</label>
+                        <select id="country" class="w-full p-3 border-2 border-gray-300 rounded-lg bg-white focus:outline-none focus:border-blue-500">
+                            <option value="">Select Country</option>
+                        </select>
+                    </div>
+                     <div class="relative">
+                        <label for="postcode" id="postcode-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600">Postcode</label>
+                        <input type="text" id="postcode" placeholder="Postcode" maxlength="10" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="flex items-start mt-6">
+                    <input type="checkbox" id="save-payment" class="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="save-payment" class="ml-3 text-sm">
+                        Save Payment Information
+                        <p class="text-xs text-gray-500">Saving payment details is only available with 2-Step Verification.</p>
+                    </label>
+                </div>
+            </div>
+             <!-- Нижняя панель удалена -->
+        </div>
+
+        <!-- ===== Page 5: Shipping Info ===== -->
+        <div id="shipping-page" class="page">
+             <div class="header p-4 flex items-center shadow-sm">
+                 <div class="w-5"></div>
+                <div class="flex-grow text-center">
+                    <h2 class="text-lg font-bold">Shipping Information</h2>
+                </div>
+                 <i class="fas fa-times text-xl text-gray-500 cursor-pointer" onclick="showPage('checkout-page')"></i>
+            </div>
+             <div class="flex-grow p-4 overflow-y-auto space-y-4">
+                <input type="text" id="shipping-address-1" placeholder="Address 1 (Street)" class="w-full p-3 border rounded-lg">
+                <input type="text" placeholder="Address 2 (Street)" class="w-full p-3 border rounded-lg">
+                <input type="text" placeholder="City" class="w-full p-3 border rounded-lg">
+                <input type="text" placeholder="State" class="w-full p-3 border rounded-lg">
+                <select id="shipping-country" class="w-full p-3 border rounded-lg bg-white">
+                    <option>Country</option>
+                </select>
+                <input type="text" placeholder="Postcode" class="w-full p-3 border rounded-lg">
+                
+                <h3 class="font-semibold pt-4">Receiver</h3>
+                <input type="text" id="shipping-full-name" placeholder="Full Name" class="w-full p-3 border rounded-lg">
+                <input type="tel" id="shipping-phone-number" placeholder="Phone Number" class="w-full p-3 border rounded-lg">
+
+                 <div class="flex items-center mt-2">
+                    <input type="checkbox" id="save-shipping" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="save-shipping" class="ml-3 text-sm">Save Shipping Information</label>
+                </div>
+             </div>
+             <!-- Нижняя панель удалена -->
+        </div>
+        
+        <!-- ===== Page 6: Success ===== -->
+        <div id="success-page" class="page">
+            <div class="flex-grow flex flex-col items-center justify-center text-center p-8">
+                <div class="text-8xl mb-6">🎉</div>
+                <h2 class="text-2xl font-bold mb-2">Thank You!</h2>
+                <p class="mb-8">Your order has been placed successfully.</p>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // --- TELEGRAM INTEGRATION ---
+        const tg = window.Telegram.WebApp;
+
+        // --- DATA ---
+        const products = [
+            { id: 1, name: 'Cake', price: 1.00, emoji: '🍰', isNew: true, desc: 'A slice of heaven' },
+            { id: 2, name: 'Burger', price: 4.99, emoji: '🍔', isNew: false, desc: 'Classic beef burger' },
+            { id: 3, name: 'Fries', price: 1.49, emoji: '🍟', isNew: false, desc: 'Crispy golden fries' },
+            { id: 4, name: 'Hotdog', price: 3.49, emoji: '🌭', isNew: false, desc: 'Grilled to perfection' },
+            { id: 5, name: 'Taco', price: 3.99, emoji: '🌮', isNew: false, desc: 'Mucho más' },
+            { id: 6, name: 'Pizza', price: 7.99, emoji: '🍕', isNew: false, desc: 'Cheesy and delicious' },
+        ];
+
+        // --- STATE ---
+        let cart = {}; // { productId: quantity }
+        let currentPage = 'catalog-page';
+        let isPaymentInfoFilled = false;
+        let isShippingInfoFilled = false;
+        let paymentInfo = { lastFour: '' };
+        let shippingInfo = { name: '', phone: '', address: '' };
+
+        // --- DOM ELEMENTS ---
+        const catalogGrid = document.getElementById('catalog-grid');
+        const orderList = document.getElementById('order-list');
+        const checkoutSummary = document.getElementById('checkout-summary');
+        const checkoutTotalPrice = document.getElementById('checkout-total-price');
+        const closeCheckoutBtn = document.getElementById('close-checkout-btn');
+
+        const shippingFullNameInput = document.getElementById('shipping-full-name');
+        const shippingPhoneInput = document.getElementById('shipping-phone-number');
+        const shippingAddress1Input = document.getElementById('shipping-address-1');
+
+        const paymentMethodText = document.getElementById('payment-method-text');
+        const shippingAddressText = document.getElementById('shipping-address-text');
+        const shippingNameText = document.getElementById('shipping-name-text');
+        const shippingPhoneText = document.getElementById('shipping-phone-text');
+        const nameDetails = document.getElementById('name-details');
+        const namePlaceholder = document.getElementById('name-placeholder');
+
+        // --- RENDER FUNCTIONS ---
+        function renderCatalog() {
+            catalogGrid.innerHTML = '';
+            products.forEach(product => {
+                const quantity = cart[product.id] || 0;
+                const itemHtml = `
+                    <div class="rounded-xl p-3 flex flex-col items-center justify-between text-center">
+                        <div class="relative w-full">
+                            <div class="text-5xl">${product.emoji}</div>
+                            ${quantity > 0 ? `<div class="item-badge">${quantity}</div>` : ''}
+                        </div>
+                        <div>
+                            <div class="font-semibold text-sm flex items-center justify-center space-x-1">
+                                <span>${product.name}</span>
+                                ${product.isNew ? '<span class="new-badge">NEW</span>' : ''}
+                            </div>
+                            <p class="text-sm font-bold mb-2">$${product.price.toFixed(2)}</p>
+                        </div>
+                        <div class="w-full mt-2 h-10 relative">
+                             <button class="absolute left-0 top-0 h-full w-[48%] rounded-lg bg-red-500 text-white text-xl font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}" onclick="handleCartAction('remove', ${product.id})">-</button>
+                             <button class="absolute right-0 top-0 h-full rounded-lg text-white font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'w-[48%]' : 'w-full'} ${product.isNew && quantity === 0 ? 'bg-[#27ae60]' : 'bg-[#f39c12]'}" onclick="handleCartAction('add', ${product.id})">
+                                <span class="absolute inset-0 flex items-center justify-center text-sm transition-opacity duration-150 ${quantity > 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}">${product.isNew ? 'BUY' : 'ADD'}</span>
+                                <span class="absolute inset-0 flex items-center justify-center text-xl transition-opacity duration-150 ${quantity > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}">+</span>
+                            </button>
+                        </div>
+                    </div>`;
+                catalogGrid.innerHTML += itemHtml;
+            });
+            updateTelegramUI();
+        }
+
+        function renderOrder() {
+            orderList.innerHTML = '';
+            if (Object.keys(cart).length === 0) {
+                 orderList.innerHTML = '<p class="text-center">Your order is empty.</p>';
+            } else {
+                for (const productId in cart) {
+                    const product = products.find(p => p.id == productId);
+                    const quantity = cart[productId];
+                    const itemTotal = product.price * quantity;
+                    const itemHtml = `
+                        <div class="flex items-center">
+                            <div class="text-4xl mr-4">${product.emoji}</div>
+                            <div class="flex-grow">
+                                <p class="font-bold">${product.name} <span class="text-orange-500">x${quantity}</span></p>
+                                <p class="text-sm">${product.desc}</p>
+                            </div>
+                            <div class="font-semibold">$${itemTotal.toFixed(2)}</div>
+                        </div>`;
+                    orderList.innerHTML += itemHtml;
+                }
+            }
+            updateTelegramUI();
+        }
+        
+        function renderCheckout() {
+            checkoutSummary.innerHTML = '';
+            let totalPrice = 0;
+            for (const productId in cart) {
+                const product = products.find(p => p.id == productId);
+                const quantity = cart[productId];
+                totalPrice += product.price * quantity;
+            }
+            checkoutTotalPrice.textContent = `$${totalPrice.toFixed(2)}`;
+
+            if (isPaymentInfoFilled) {
+                paymentMethodText.textContent = `Card **** ${paymentInfo.lastFour}`;
+                paymentMethodText.classList.remove('text-blue-500');
+            }
+            if (isShippingInfoFilled) {
+                shippingAddressText.textContent = shippingInfo.address;
+                shippingAddressText.classList.remove('text-blue-500');
+                shippingNameText.textContent = shippingInfo.name;
+                shippingPhoneText.textContent = shippingInfo.phone;
+                namePlaceholder.style.display = 'none';
+                nameDetails.style.display = 'block';
+            }
+             updateTelegramUI();
+        }
+
+        // --- LOGIC & EVENT HANDLERS ---
+        function handleCartAction(action, productId) {
+            tg.HapticFeedback.impactOccurred('light');
+            if (action === 'add') {
+                cart[productId] = (cart[productId] || 0) + 1;
+            } else if (action === 'remove') {
+                if (cart[productId] > 1) cart[productId]--;
+                else delete cart[productId];
+            }
+            renderCatalog();
+        }
+
+        function getTotalPrice() {
+            return Object.entries(cart).reduce((sum, [productId, quantity]) => {
+                const product = products.find(p => p.id == productId);
+                return sum + (product.price * quantity);
+            }, 0);
+        }
+        
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            currentPage = pageId;
+            
+            if (pageId === 'order-page') renderOrder();
+            else if (pageId === 'checkout-page') renderCheckout();
+            else if (pageId === 'catalog-page') renderCatalog();
+            
+            updateTelegramUI();
+        }
+
+        closeCheckoutBtn.addEventListener('click', () => showPage('catalog-page'));
+        
+        // --- TELEGRAM UI MANAGEMENT ---
+
+        function updateTelegramUI() {
+            const totalPrice = getTotalPrice();
+            const hasItems = Object.keys(cart).length > 0;
+
+            // Main Button Logic
+            switch (currentPage) {
+                case 'catalog-page':
+                    if (hasItems) {
+                        tg.MainButton.setText('View Order');
+                        tg.MainButton.show();
+                    } else {
+                        tg.MainButton.hide();
+                    }
+                    break;
+                case 'order-page':
+                    tg.MainButton.setText(`Pay $${totalPrice.toFixed(2)}`);
+                    tg.MainButton.show();
+                    break;
+                case 'checkout-page':
+                    tg.MainButton.setText(`Pay $${totalPrice.toFixed(2)}`);
+                    tg.MainButton.show();
+                    break;
+                 case 'payment-page':
+                 case 'shipping-page':
+                    tg.MainButton.setText('Proceed to Checkout');
+                    // We'll manage enable/disable state separately
+                    tg.MainButton.show();
+                    break;
+                default:
+                    tg.MainButton.hide();
+                    break;
+            }
+
+            // Back Button Logic
+            if (['order-page', 'checkout-page', 'payment-page', 'shipping-page'].includes(currentPage)) {
+                tg.BackButton.show();
+            } else {
+                tg.BackButton.hide();
+            }
+        }
+        
+        tg.onEvent('mainButtonClicked', () => {
+            tg.HapticFeedback.notificationOccurred('success');
+            switch (currentPage) {
+                case 'catalog-page':
+                    showPage('order-page');
+                    break;
+                case 'order-page':
+                    showPage('checkout-page');
+                    break;
+                case 'checkout-page':
+                    // Mock payment and show success
+                    tg.MainButton.showProgress();
+                    setTimeout(() => {
+                        tg.MainButton.hideProgress();
+                        showPage('success-page');
+                    }, 1500);
+                    break;
+                case 'payment-page':
+                    isPaymentInfoFilled = true;
+                    paymentInfo.lastFour = "1234"; // Mock data
+                    showPage('shipping-page');
+                    break;
+                case 'shipping-page':
+                    const name = shippingFullNameInput.value.trim();
+                    const phone = shippingPhoneInput.value.trim();
+                    const address = shippingAddress1Input.value.trim();
+                    if (name && phone && address) {
+                        isShippingInfoFilled = true;
+                        shippingInfo = { name, phone, address };
+                        showPage('checkout-page');
+                    } else {
+                       tg.showAlert('Please fill in receiver name, phone and address.');
+                    }
+                    break;
+            }
+        });
+
+        tg.onEvent('backButtonClicked', () => {
+            tg.HapticFeedback.impactOccurred('light');
+            switch (currentPage) {
+                case 'order-page':
+                    showPage('catalog-page');
+                    break;
+                case 'checkout-page':
+                    showPage('order-page');
+                    break;
+                case 'payment-page':
+                case 'shipping-page':
+                     showPage('checkout-page');
+                     break;
+            }
+        });
+
+
+        // --- DATA FETCHING (Mock) ---
+        function fetchAndPopulateCountries() {
+            const select = document.getElementById('country');
+            const shippingSelect = document.getElementById('shipping-country');
+            const countries = [ {name: 'United States', code: 'US'}, {name: 'Ukraine', code: 'UA'} ];
+            countries.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.code;
+                option.textContent = c.name;
+                select.appendChild(option);
+                shippingSelect.appendChild(option.cloneNode(true));
+            });
+        }
+        
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            tg.ready();
+            tg.expand();
+            
+            // Set theme colors from Telegram
+            document.body.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color);
+            document.body.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color);
+            document.body.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color);
+            document.body.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color);
+            tg.MainButton.textColor = tg.themeParams.button_text_color;
+            tg.MainButton.color = tg.themeParams.button_color;
+
+            // Pre-fill user data if available
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                shippingFullNameInput.value = [user.first_name, user.last_name].filter(Boolean).join(' ');
+            }
+
+            renderCatalog();
+            fetchAndPopulateCountries();
+            updateTelegramUI();
+        });
+    </script>
+
+</body>
+</html>
