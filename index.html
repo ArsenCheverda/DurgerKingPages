@@ -7,13 +7,21 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 
     <style>
+        :root {
+            /* Змінні для світлої теми за замовчуванням */
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-secondary-bg-color: #f2f2f2;
+            --tg-theme-button-color: #3390ec;
+            --tg-theme-button-text-color: #ffffff;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
             margin: 0;
             padding: 0;
             overflow-x: hidden;
@@ -31,7 +39,7 @@
             display: flex;
         }
 
-        /* Оновлена сітка для товарів */
+        /* Сітка для товарів */
         #catalog-grid {
             display: flex;
             flex-wrap: wrap;
@@ -41,7 +49,7 @@
         }
 
         .product-card {
-            background-color: var(--tg-theme-secondary-bg-color, #f2f2f2);
+            background-color: var(--tg-theme-secondary-bg-color);
             border-radius: 12px;
             padding: 8px;
             text-align: center;
@@ -52,11 +60,16 @@
             width: 105px; /* Фіксована ширина для 3-х колонок */
         }
 
-        .product-card lottie-player {
+        .product-emoji {
+            font-size: 60px; /* Великий розмір для емодзі */
+            line-height: 1;
             width: 70px;
             height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin-bottom: 5px;
-            cursor: pointer;
+            cursor: default; /* Емодзі не клікабельні */
         }
         
         /* Скелет завантаження */
@@ -95,7 +108,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid var(--tg-theme-bg-color, #fff);
+            border: 2px solid var(--tg-theme-bg-color);
         }
         
         .new-badge {
@@ -111,8 +124,8 @@
         .shimmer-btn {
             position: relative;
             overflow: hidden;
-            background-color: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #ffffff);
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
         }
 
         .shimmer-btn::after {
@@ -150,7 +163,7 @@
             visibility: visible;
         }
         .modal-content {
-            background-color: var(--tg-theme-secondary-bg-color, #fff);
+            background-color: var(--tg-theme-secondary-bg-color);
             width: 100%;
             padding: 20px;
             border-radius: 20px 20px 0 0;
@@ -174,13 +187,13 @@
     <!-- Сторінка 2: Замовлення -->
     <div id="order-page" class="page">
         <div class="w-full">
-            <h2 class="text-xl font-bold mb-4">YOUR ORDER</h2>
+            <h2 class="text-xl font-bold mb-4">ВАШЕ ЗАМОВЛЕННЯ</h2>
             <div id="order-list" class="space-y-4">
                 <!-- Сюди додаються товари з кошика -->
             </div>
              <div class="mt-6 border-t pt-4">
                 <div class="flex justify-between font-bold text-lg">
-                    <span>Total</span>
+                    <span>Всього</span>
                     <span id="order-total-price">$0.00</span>
                 </div>
             </div>
@@ -193,12 +206,12 @@
             <div class="flex justify-end mb-2">
                  <button onclick="closeStarModal()" class="text-gray-400 text-2xl">&times;</button>
             </div>
-            <lottie-player id="modal-lottie" autoplay loop style="width: 120px; height: 120px; margin: 0 auto;"></lottie-player>
-            <h2 id="modal-product-name" class="text-2xl font-bold mt-2">Cake</h2>
+            <div id="modal-emoji" class="text-7xl mb-2"></div>
+            <h2 id="modal-product-name" class="text-2xl font-bold mt-2">Торт</h2>
             <p class="text-gray-500 mb-4">Durger King</p>
-            <p class="mb-6">Do you want to buy Cake in Durger King for 1 star?</p>
+            <p id="modal-text" class="mb-6">Хочете купити Торт в Durger King за 1 зірку?</p>
             <button id="confirm-star-payment" class="w-full py-3 rounded-lg font-semibold shimmer-btn">
-                Confirm and Pay ★ 1 Star
+                Підтвердити та сплатити ★ 1
             </button>
         </div>
     </div>
@@ -208,18 +221,18 @@
 
         // --- ДАНІ ---
         const products = [
-            { id: 1, name: 'Cake', price: 1, lottieUrl: 'https://lottie.host/b2896694-a719-4993-8a03-99713be85135/Q1aJ0i5ksm.json', isNew: true, isStar: true },
-            { id: 2, name: 'Burger', price: 4.99, lottieUrl: 'https://lottie.host/997b6b1a-2123-48b4-9005-a05c48b64a27/uTSpSTp2tM.json', isNew: false },
-            { id: 3, name: 'Fries', price: 1.49, lottieUrl: 'https://lottie.host/813337e7-a979-4a94-8461-46328739a8dc/2mJ2Q43sQ6.json', isNew: false },
-            { id: 4, name: 'Hotdog', price: 3.49, lottieUrl: 'https://lottie.host/02005a76-2581-426d-886f-124d8ac854c8/1S6Wp19LzB.json', isNew: false },
-            { id: 5, name: 'Taco', price: 3.99, lottieUrl: 'https://lottie.host/e3529a6b-e526-4448-8e65-27a36fbc573e/l5W4DMj1jE.json', isNew: false },
-            { id: 6, name: 'Pizza', price: 7.99, lottieUrl: 'https://lottie.host/27dd05b0-7b3b-47e2-a08b-a79015d862f6/r95sYmS2Wj.json', isNew: false },
-            { id: 7, name: 'Donut', price: 1.49, lottieUrl: 'https://lottie.host/81617b0f-a42e-43b9-ab5d-209277083049/2u5j82A97w.json', isNew: false },
-            { id: 8, name: 'Popcorn', price: 1.99, lottieUrl: 'https://lottie.host/be7755f4-3435-4235-8597-9e73b22b10a2/I5CnVU8jL1.json', isNew: false },
-            { id: 9, name: 'Coke', price: 1.49, lottieUrl: 'https://lottie.host/9bc1c676-429a-4786-8924-f7725e6e87a2/uB2nzn4j37.json', isNew: false },
-            { id: 10, name: 'Icecream', price: 5.99, lottieUrl: 'https://lottie.host/a08c0f5f-0749-41bc-993d-8e7c10d3f86e/7F1JgKMnlr.json', isNew: false },
-            { id: 11, name: 'Cookie', price: 3.99, lottieUrl: 'https://lottie.host/e2c34015-a131-419a-9e20-7f28cb11c15f/a7vEATkM6T.json', isNew: false },
-            { id: 12, name: 'Flan', price: 7.99, lottieUrl: 'https://lottie.host/79a8383e-3645-424a-89a1-5d07a164b85c/dBlfM1kY1D.json', isNew: false },
+            { id: 1, name: 'Торт', emoji: '🎂', price: 1, isNew: true, isStar: true },
+            { id: 2, name: 'Бургер', emoji: '🍔', price: 4.99, isNew: false },
+            { id: 3, name: 'Картопля', emoji: '🍟', price: 1.49, isNew: false },
+            { id: 4, name: 'Хот-дог', emoji: '🌭', price: 3.49, isNew: false },
+            { id: 5, name: 'Тако', emoji: '🌮', price: 3.99, isNew: false },
+            { id: 6, name: 'Піца', emoji: '🍕', price: 7.99, isNew: false },
+            { id: 7, name: 'Донат', emoji: '🍩', price: 1.49, isNew: false },
+            { id: 8, name: 'Попкорн', emoji: '🍿', price: 1.99, isNew: false },
+            { id: 9, name: 'Кола', emoji: '🥤', price: 1.49, isNew: false },
+            { id: 10, name: 'Морозиво', emoji: '🍦', price: 5.99, isNew: false },
+            { id: 11, name: 'Печиво', emoji: '🍪', price: 3.99, isNew: false },
+            { id: 12, name: 'Флан', emoji: '🍮', price: 7.99, isNew: false },
         ];
 
         // --- СТАН ---
@@ -233,8 +246,9 @@
         const orderList = document.getElementById('order-list');
         const orderTotalPrice = document.getElementById('order-total-price');
         const starModal = document.getElementById('star-modal');
-        const modalLottie = document.getElementById('modal-lottie');
+        const modalEmoji = document.getElementById('modal-emoji');
         const modalProductName = document.getElementById('modal-product-name');
+        const modalText = document.getElementById('modal-text');
         const confirmStarPaymentBtn = document.getElementById('confirm-star-payment');
 
         // --- ФУНКЦІЇ ВІДОБРАЖЕННЯ ---
@@ -251,12 +265,12 @@
             products.forEach(product => {
                 const quantity = cart[product.id] || 0;
                 const buttonHtml = product.isStar 
-                ? `<button class="w-full mt-2 h-9 rounded-lg text-sm font-bold shimmer-btn" style="background-color: #27ae60;" onclick="buyWithStars(${product.id})">BUY</button>`
+                ? `<button class="w-full mt-2 h-9 rounded-lg text-sm font-bold shimmer-btn" style="background-color: #27ae60;" onclick="buyWithStars(${product.id})">КУПИТИ</button>`
                 : `
                 <div class="w-full mt-2 h-9 relative">
                     <button class="absolute left-0 top-0 h-full w-[48%] rounded-lg text-white text-xl font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}" style="background-color: #e74c3c;" onclick="removeFromCart(${product.id})">-</button>
                     <div class="absolute right-0 top-0 h-full rounded-lg text-white font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'w-[48%]' : 'w-full'}" style="background-color: #f39c12;">
-                        <span class="absolute inset-0 flex items-center justify-center text-sm transition-opacity duration-150 ${quantity > 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}" onclick="addToCart(${product.id})">ADD</span>
+                        <span class="absolute inset-0 flex items-center justify-center text-sm transition-opacity duration-150 ${quantity > 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}" onclick="addToCart(${product.id})">ДОДАТИ</span>
                         <span class="absolute inset-0 flex items-center justify-center text-xl transition-opacity duration-150 ${quantity > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}" onclick="addToCart(${product.id})">+</span>
                     </div>
                 </div>`;
@@ -265,7 +279,7 @@
                 itemHtml.className = 'product-card';
                 itemHtml.innerHTML = `
                     <div class="relative w-full">
-                        <lottie-player src="${product.lottieUrl}" background="transparent" speed="1" style="margin: 0 auto;"></lottie-player>
+                        <div class="product-emoji">${product.emoji}</div>
                         ${quantity > 0 ? `<div class="item-badge">${quantity}</div>` : ''}
                     </div>
                     <div>
@@ -281,8 +295,6 @@
                     ${buttonHtml}
                 `;
                 catalogGrid.appendChild(itemHtml);
-                const lottiePlayer = itemHtml.querySelector('lottie-player');
-                lottiePlayer.addEventListener('click', () => lottiePlayer.play());
             });
             updateMainButton();
         }
@@ -291,7 +303,7 @@
             let orderHtml = '';
             const total = calculateTotal();
             if (total.items === 0) {
-                orderHtml = '<p class="text-center text-gray-500">Your order is empty.</p>';
+                orderHtml = '<p class="text-center text-gray-500">Ваше замовлення порожнє.</p>';
             } else {
                 const itemHtmls = [];
                 for (const productId in cart) {
@@ -301,7 +313,7 @@
                         const itemTotal = product.price * quantity;
                         itemHtmls.push(`
                             <div class="flex items-center">
-                                 <lottie-player src="${product.lottieUrl}" autoplay loop style="width: 50px; height: 50px; margin-right: 15px;"></lottie-player>
+                                 <div class="text-4xl mr-4">${product.emoji}</div>
                                 <div class="flex-grow">
                                     <p class="font-bold">${product.name} <span class="text-gray-500 font-normal">x${quantity}</span></p>
                                 </div>
@@ -328,8 +340,12 @@
                 renderOrder();
                 tg.BackButton.show();
                 const total = calculateTotal();
-                tg.MainButton.setText(`Pay $${total.price.toFixed(2)}`);
-                tg.MainButton.show();
+                tg.MainButton.setText(`Сплатити $${total.price.toFixed(2)}`);
+                if (total.items > 0) {
+                    tg.MainButton.show();
+                } else {
+                    tg.MainButton.hide();
+                }
             }
         }
 
@@ -361,7 +377,7 @@
         function updateMainButton() {
             const total = calculateTotal();
             if (total.items > 0) {
-                tg.MainButton.setText(`View Order ($${total.price.toFixed(2)})`);
+                tg.MainButton.setText(`Переглянути замовлення ($${total.price.toFixed(2)})`);
                 tg.MainButton.show();
             } else {
                 tg.MainButton.hide();
@@ -370,37 +386,70 @@
         
         function buyWithStars(productId) {
             const product = products.find(p => p.id == productId);
-            modalLottie.load(product.lottieUrl);
+            modalEmoji.textContent = product.emoji;
             modalProductName.textContent = product.name;
+            modalText.textContent = `Хочете купити ${product.name} в Durger King за ${product.price} зірку?`;
+            confirmStarPaymentBtn.innerHTML = `Підтвердити та сплатити ★ ${product.price}`;
             starModal.classList.add('visible');
-            confirmStarPaymentBtn.dataset.productId = productId;
+            confirmStarPaymentBtn.onclick = () => handleStarPayment(product.id);
         }
 
         function closeStarModal() {
             starModal.classList.remove('visible');
         }
 
-        function handleStarPayment() {
-            const invoiceLink = `https://t.me/invoice/example`; 
-            tg.openInvoice(invoiceLink, (status) => {
-                if (status === 'paid') tg.close();
-            });
+        function handleStarPayment(productId) {
+             const product = products.find(p => p.id == productId);
+            // Тут логіка оплати зірками
+            // Наприклад, відкриття інвойсу
+             tg.openInvoice(`YOUR_INVOICE_LINK_FOR_${product.price}_STARS`, (status) => {
+                 if (status === 'paid') {
+                    tg.showPopup({
+                        title: 'Успіх!',
+                        message: `Ви успішно придбали ${product.name} ${product.emoji}`,
+                        buttons: [{type: 'ok'}]
+                    });
+                    tg.close();
+                 } else {
+                    tg.showPopup({
+                        title: 'Помилка',
+                        message: `Не вдалося виконати платіж.`,
+                        buttons: [{type: 'ok'}]
+                    });
+                 }
+             });
             closeStarModal();
         }
 
         // --- ІНІЦІАЛІЗАЦІЯ ---
         document.addEventListener('DOMContentLoaded', () => {
             tg.ready();
+            tg.expand();
             
-            tg.MainButton.textColor = '#FFFFFF';
-            tg.MainButton.color = '#27ae60';
+            // Налаштування теми з Telegram
+            document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color);
+            document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color);
+            document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color);
+            document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color);
+            document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color);
+
             tg.MainButton.onClick(() => {
                 if (currentPage === 'catalog-page') {
                     showPage('order-page');
                 } else if (currentPage === 'order-page') {
-                    const total = calculateTotal();
-                    tg.showAlert(`Final amount to pay: $${total.price.toFixed(2)}`);
-                    // Тут буде логіка реальної оплати
+                    // Логіка оплати звичайних товарів
+                    const itemsForInvoice = [];
+                    for (const productId in cart) {
+                         const product = products.find(p => p.id == productId && !p.isStar);
+                         if(product) {
+                            itemsForInvoice.push({
+                                label: `${product.name} x${cart[productId]}`,
+                                amount: product.price * cart[productId] * 100 // у центах
+                            });
+                         }
+                    }
+                    // Далі можна було б згенерувати інвойс
+                     tg.showAlert(`Тут буде логіка реальної оплати`);
                 }
             });
 
@@ -408,20 +457,14 @@
                 showPage('catalog-page');
             });
 
-            confirmStarPaymentBtn.addEventListener('click', handleStarPayment);
-
             renderSkeleton();
             // Імітуємо невелику затримку завантаження
             setTimeout(() => {
-                // Спочатку робимо контейнер видимим
                 catalogGrid.style.display = 'flex';
-                // Потім ховаємо завантажувач
                 skeletonLoader.style.display = 'none';
-                // І тільки потім наповнюємо видимий контейнер
                 renderCatalog();
             }, 500); 
         });
     </script>
 </body>
 </html>
-
