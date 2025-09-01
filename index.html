@@ -1,88 +1,83 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Важливо для коректного відображення в мобільних додатках -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, user-scalable=no">
     <title>Durger King - Mini App</title>
+    
+    <!-- Скрипти -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        /* Використання системного шрифту для кращої інтеграції */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Slightly off-white for a softer look */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            /* Кольори теми з Telegram */
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
-        .main-container {
-            max-width: 420px;
-            margin: auto;
-            background-color: #ffffff; /* Light green background similar to screenshot */
-            min-height: 100vh;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
+
         .page {
             display: none;
             flex-direction: column;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 15px;
+            box-sizing: border-box;
         }
+
         .page.active {
             display: flex;
         }
-        .header {
-            background-color: #ffffff;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .bottom-bar {
-            background-color: #ffffff;
-            border-top: 1px solid #e0e0e0;
-        }
-        .btn-primary {
-            background-color: #27ae60;
-            color: white;
-            font-weight: 600;
-            border-radius: 12px;
-            padding: 14px;
-            text-align: center;
+
+        /* Динамічна сітка товарів */
+        #catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
             width: 100%;
-            transition: all 0.2s;
         }
-        .btn-primary:hover {
-            background-color: #229954;
+
+        .product-card {
+            background-color: var(--tg-theme-secondary-bg-color, #f2f2f2);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
         }
-        .btn-primary:disabled {
-            background-color: #95a5a6;
-            cursor: not-allowed;
-        }
-        .btn-secondary {
-            background-color: #f39c12;
-            color: white;
-            font-weight: 600;
-            border-radius: 10px;
-            padding: 8px 12px;
-            transition: background-color 0.2s;
-        }
-        .btn-secondary:hover {
-            background-color: #e67e22;
-        }
-        .item-emoji {
-            font-size: 3.5rem;
-            line-height: 1;
+
+        .product-card lottie-player {
+            width: 80px;
+            height: 80px;
             margin-bottom: 8px;
+            cursor: pointer;
         }
+
         .item-badge {
             position: absolute;
-            top: -8px;
-            right: -8px;
+            top: -5px;
+            right: -5px;
             background-color: #e74c3c;
             color: white;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: bold;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 2px solid var(--tg-theme-bg-color, #fff);
         }
+        
         .new-badge {
             background-color: #27ae60;
             color: white;
@@ -92,620 +87,257 @@
             border-radius: 6px;
             text-transform: uppercase;
         }
-        .input-error {
-            border-color: #e74c3c !important;
+
+        /* Ефект мерехтіння для кнопок */
+        .shimmer-btn {
+            position: relative;
+            overflow: hidden;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
         }
-        .label-error {
-            color: #e74c3c !important;
+
+        .shimmer-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: shimmer 5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -150%; }
+            40% { left: 150%; }
+            100% { left: 150%; }
+        }
+        
+        /* Модальне вікно для покупки за зірочки */
+        #star-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #star-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: var(--tg-theme-secondary-bg-color, #fff);
+            width: 100%;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        #star-modal.visible .modal-content {
+             transform: translateY(0);
         }
     </style>
 </head>
 <body>
 
-    <div class="main-container">
-
-        <!-- ===== Page 1: Catalog ===== -->
-        <div id="catalog-page" class="page active">
-            <div class="header p-4 flex items-center justify-between shadow-sm">
-                <i class="fas fa-times text-xl text-gray-500 cursor-pointer"></i>
-                <div class="font-bold text-lg flex items-center">
-                    <span class="bg-red-500 text-white rounded-md w-7 h-7 flex items-center justify-center mr-2 font-bold">D</span>
-                    Durger King
-                </div>
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-plus text-xl text-gray-500 cursor-pointer"></i>
-                    <i class="fas fa-expand text-xl text-gray-500 cursor-pointer"></i>
-                </div>
-            </div>
-            <div id="catalog-grid" class="flex-grow p-4 grid grid-cols-2 gap-4 overflow-y-auto">
-                <!-- Product items will be injected here by JavaScript -->
-            </div>
-            <div class="bottom-bar p-4">
-                <button id="view-order-btn" class="btn-primary">View Order</button>
-            </div>
+    <!-- Сторінка 1: Каталог -->
+    <div id="catalog-page" class="page active">
+        <div id="catalog-grid">
+            <!-- Товари будуть додані сюди через JavaScript -->
         </div>
-
-        <!-- ===== Page 2: Your Order ===== -->
-        <div id="order-page" class="page">
-            <div class="header p-4 flex items-center justify-between shadow-sm">
-                <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer" onclick="showPage('catalog-page')"></i>
-                 <div class="font-bold text-lg flex items-center">
-                    <span class="bg-red-500 text-white rounded-md w-7 h-7 flex items-center justify-center mr-2 font-bold">D</span>
-                    Durger King
-                </div>
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-plus text-xl text-gray-500 cursor-pointer"></i>
-                    <i class="fas fa-expand text-xl text-gray-500 cursor-pointer"></i>
-                </div>
+    </div>
+    
+    <!-- Модальне вікно для покупки за зірочки -->
+    <div id="star-modal">
+        <div class="modal-content">
+            <div class="flex justify-end mb-2">
+                 <button onclick="closeStarModal()" class="text-gray-400 text-2xl">&times;</button>
             </div>
-            <div class="flex-grow p-4 overflow-y-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">YOUR ORDER</h2>
-                    <button class="text-green-600 font-semibold" onclick="showPage('catalog-page')">Edit</button>
-                </div>
-                <div id="order-list" class="space-y-4">
-                    <!-- Order items will be injected here -->
-                </div>
-                <div class="mt-6">
-                    <label for="comment" class="text-gray-600">Add comment...</label>
-                    <textarea id="comment" rows="3" class="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Any special requests, details, final wishes etc."></textarea>
-                </div>
-            </div>
-            <div class="bottom-bar p-4">
-                <button id="pay-from-order-btn" class="btn-primary">PAY $0.00</button>
-            </div>
+            <lottie-player id="modal-lottie" autoplay loop style="width: 120px; height: 120px; margin: 0 auto;"></lottie-player>
+            <h2 id="modal-product-name" class="text-2xl font-bold mt-2">Cake</h2>
+            <p class="text-gray-500 mb-4">Durger King</p>
+            <p class="mb-6">Do you want to buy Cake in Durger King for 1 star?</p>
+            <button id="confirm-star-payment" class="w-full py-3 rounded-lg font-semibold shimmer-btn">
+                Confirm and Pay ★ 1 Star
+            </button>
         </div>
-
-        <!-- ===== Page 3: Checkout ===== -->
-        <div id="checkout-page" class="page">
-            <div class="header p-4 flex items-center shadow-sm">
-                 <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer mr-4" onclick="showPage('order-page')"></i>
-                <h2 class="text-lg font-bold">Checkout (Test)</h2>
-                <div class="flex-grow"></div>
-                <i id="close-checkout-btn" class="fas fa-times text-xl text-gray-500 cursor-pointer"></i>
-            </div>
-            <div class="flex-grow p-4 overflow-y-auto bg-gray-50">
-                <div class="bg-white p-4 rounded-lg shadow-sm">
-                    <div class="flex items-center">
-                         <div class="text-5xl bg-yellow-400 p-2 rounded-lg mr-4">🍟</div>
-                        <div>
-                            <p class="font-bold">Order #160546591</p>
-                            <p class="text-sm text-gray-500">Perfect Lunch from Durger King.</p>
-                        </div>
-                    </div>
-                    <div id="checkout-summary" class="mt-4 space-y-2 border-t pt-4">
-                        <!-- Checkout items summary here -->
-                    </div>
-                    <div class="flex justify-between font-bold text-lg mt-4 border-t pt-4">
-                        <span>Total</span>
-                        <span id="checkout-total-price">$0.00</span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-lg shadow-sm mt-4">
-                    <div class="flex items-center justify-between cursor-pointer py-2" onclick="showPage('payment-page')">
-                        <div class="flex items-center">
-                            <i class="fas fa-credit-card text-gray-500 w-6 text-center mr-3"></i>
-                            <div id="payment-method-details">
-                                <p class="font-semibold">Payment method</p>
-                                <p id="payment-method-text" class="text-sm text-blue-500">Add payment method</p>
-                            </div>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-400"></i>
-                    </div>
-                     <div class="border-t"></div>
-                    <div class="flex items-center justify-between cursor-pointer py-2" onclick="showPage('shipping-page')">
-                        <div class="flex items-center">
-                            <i class="fas fa-map-marker-alt text-gray-500 w-6 text-center mr-3"></i>
-                             <div>
-                                <p class="font-semibold">Shipping address</p>
-                                <p id="shipping-address-text" class="text-sm text-blue-500">Add shipping address</p>
-                            </div>
-                        </div>
-                         <i class="fas fa-chevron-right text-gray-400"></i>
-                    </div>
-                     <div class="border-t"></div>
-                    <div id="name-link-block" class="flex items-center justify-between cursor-pointer py-2" onclick="showPage('shipping-page')">
-                         <div class="flex items-center">
-                            <i class="fas fa-user text-gray-500 w-6 text-center mr-3"></i>
-                            <div id="name-placeholder">
-                                 <p class="font-semibold">Name</p>
-                            </div>
-                            <div id="name-details" style="display: none;">
-                                <p id="shipping-name-text" class="font-semibold"></p>
-                                <p id="shipping-phone-text" class="text-sm text-gray-500"></p>
-                            </div>
-                        </div>
-                         <i class="fas fa-chevron-right text-gray-400"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="bottom-bar p-4">
-                <button id="final-pay-btn" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg">PAY $0.00</button>
-            </div>
-        </div>
-        
-        <!-- ===== Page 4: Payment Info ===== -->
-        <div id="payment-page" class="page">
-             <div class="header p-4 flex items-center shadow-sm">
-                 <i class="fas fa-times text-xl text-gray-500 cursor-pointer" onclick="showPage('checkout-page')"></i>
-                <div class="flex-grow text-center">
-                    <h2 class="text-lg font-bold">Payment info</h2>
-                </div>
-                <div class="w-5"></div> <!-- Placeholder to balance the title -->
-            </div>
-            <div id="payment-form" class="flex-grow p-4 overflow-y-auto">
-                <p class="text-blue-600 font-semibold mb-2">Enter your card information</p>
-                <div class="space-y-4 mb-6">
-                    <div class="relative">
-                        <label for="card-number" id="card-number-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Card Number</label>
-                        <input type="text" id="card-number" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors duration-200" placeholder="0000 0000 0000 0000">
-                    </div>
-                    <div class="flex space-x-4">
-                        <div class="relative w-1/2">
-                            <label for="expiry-date" id="expiry-date-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Expiry Date</label>
-                            <input type="text" id="expiry-date" placeholder="MM/YY" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors duration-200">
-                        </div>
-                        <div class="relative w-1/2">
-                             <label for="cvc" id="cvc-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-500 transition-colors duration-200">CVC</label>
-                            <input type="password" id="cvc" placeholder="•••" class="w-full p-3 border-2 border-gray-300 rounded-lg pr-10 focus:outline-none focus:border-blue-500 transition-colors duration-200">
-                            <i class="fas fa-eye absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 cursor-pointer" id="toggle-cvc"></i>
-                        </div>
-                    </div>
-                     <div class="relative">
-                        <label for="cardholder-name" id="cardholder-name-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Cardholder Name</label>
-                        <input type="text" id="cardholder-name" placeholder="Cardholder Name" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors duration-200">
-                    </div>
-                </div>
-
-                <p class="text-blue-600 font-semibold mb-2">Enter your billing address</p>
-                 <div class="space-y-4">
-                    <div class="relative">
-                        <label for="country" id="country-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Country</label>
-                        <select id="country" class="w-full p-3 border-2 border-gray-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 transition-colors duration-200">
-                            <option value="">Select Country</option>
-                            <!-- Countries will be populated by JS -->
-                        </select>
-                    </div>
-                     <div class="relative">
-                        <label for="postcode" id="postcode-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Postcode</label>
-                        <input type="text" id="postcode" placeholder="Postcode" maxlength="10" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors duration-200">
-                    </div>
-                </div>
-
-                <div class="flex items-start mt-6">
-                    <input type="checkbox" id="save-payment" class="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                    <label for="save-payment" class="ml-3 text-sm text-gray-600">
-                        Save Payment Information
-                        <p class="text-xs text-gray-500">Saving payment details is only available with 2-Step Verification.</p>
-                    </label>
-                </div>
-            </div>
-            <div class="bottom-bar p-4">
-                 <button id="proceed-btn" class="w-full bg-blue-300 text-white font-bold py-3 rounded-lg cursor-not-allowed" disabled>PROCEED TO CHECKOUT</button>
-            </div>
-        </div>
-
-        <!-- ===== Page 5: Shipping Info ===== -->
-        <div id="shipping-page" class="page">
-             <div class="header p-4 flex items-center shadow-sm">
-                 <i class="fas fa-times text-xl text-gray-500 cursor-pointer" onclick="showPage('checkout-page')"></i>
-                <div class="flex-grow text-center">
-                    <h2 class="text-lg font-bold">Shipping Information</h2>
-                </div>
-                 <div class="w-5"></div>
-            </div>
-             <div class="flex-grow p-4 overflow-y-auto space-y-4">
-                <input type="text" id="shipping-address-1" placeholder="Address 1 (Street)" class="w-full p-3 border rounded-lg">
-                <input type="text" placeholder="Address 2 (Street)" class="w-full p-3 border rounded-lg">
-                <input type="text" placeholder="City" class="w-full p-3 border rounded-lg">
-                <input type="text" placeholder="State" class="w-full p-3 border rounded-lg">
-                <select id="shipping-country" class="w-full p-3 border rounded-lg bg-white">
-                    <option>Country</option>
-                    <option>United States</option>
-                    <option>Canada</option>
-                </select>
-                <input type="text" placeholder="Postcode" class="w-full p-3 border rounded-lg">
-                
-                <h3 class="font-semibold pt-4">Receiver</h3>
-                <input type="text" id="shipping-full-name" placeholder="Full Name" class="w-full p-3 border rounded-lg">
-                <input type="tel" id="shipping-phone-number" placeholder="Phone Number" class="w-full p-3 border rounded-lg">
-
-                 <div class="flex items-center mt-2">
-                    <input type="checkbox" id="save-shipping" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                    <label for="save-shipping" class="ml-3 text-sm text-gray-600">Save Shipping Information</label>
-                </div>
-             </div>
-             <div class="bottom-bar p-4">
-                 <button id="save-shipping-btn" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg">SAVE & CONTINUE</button>
-            </div>
-        </div>
-        
-        <!-- ===== Page 6: Success ===== -->
-        <div id="success-page" class="page">
-            <div class="flex-grow flex flex-col items-center justify-center text-center p-8">
-                <div class="text-8xl mb-6">🎉</div>
-                <h2 class="text-2xl font-bold mb-2">Thank You!</h2>
-                <p class="text-gray-600 mb-8">Your order has been placed successfully.</p>
-                <button id="back-to-catalog-btn" class="btn-primary w-full max-w-xs">Back to Catalog</button>
-            </div>
-        </div>
-        
     </div>
 
     <script>
-        // --- DATA ---
+        const tg = window.Telegram.WebApp;
+
+        // --- ДАНІ ---
         const products = [
-            { id: 1, name: 'Cake', price: 1.00, emoji: '🍰', isNew: true, desc: 'A slice of heaven' },
-            { id: 2, name: 'Burger', price: 4.99, emoji: '🍔', isNew: false, desc: 'Classic beef burger' },
-            { id: 3, name: 'Fries', price: 1.49, emoji: '🍟', isNew: false, desc: 'Crispy golden fries' },
-            { id: 4, name: 'Hotdog', price: 3.49, emoji: '🌭', isNew: false, desc: 'Grilled to perfection' },
-            { id: 5, name: 'Taco', price: 3.99, emoji: '🌮', isNew: false, desc: 'Mucho más' },
-            { id: 6, name: 'Pizza', price: 7.99, emoji: '🍕', isNew: false, desc: 'Cheesy and delicious' },
-            { id: 7, name: 'Donut', price: 1.49, emoji: '🍩', isNew: false, desc: 'Hole included' },
-            { id: 8, name: 'Popcorn', price: 1.99, emoji: '🍿', isNew: false, desc: 'Movie night favorite' },
-            { id: 9, name: 'Coke', price: 1.49, emoji: '🥤', isNew: false, desc: 'Refreshing drink' },
-            { id: 10, name: 'Icecream', price: 5.99, emoji: '🍦', isNew: false, desc: 'Cool and sweet' },
-            { id: 11, name: 'Cookie', price: 3.99, emoji: '🍪', isNew: false, desc: "Milk's favorite" },
-            { id: 12, name: 'Flan', price: 7.99, emoji: '🍮', isNew: false, desc: 'Flan-tastic' },
+            { id: 1, name: 'Cake', price: 1, lottieUrl: 'https://assets10.lottiefiles.com/packages/lf20_cnfe4o2s.json', isNew: true, isStar: true },
+            { id: 2, name: 'Burger', price: 4.99, lottieUrl: 'https://assets6.lottiefiles.com/packages/lf20_v0h5i7lt.json', isNew: false },
+            { id: 3, name: 'Fries', price: 1.49, lottieUrl: 'https://assets4.lottiefiles.com/packages/lf20_jpxs3k2a.json', isNew: false },
+            { id: 4, name: 'Hotdog', price: 3.49, lottieUrl: 'https://assets8.lottiefiles.com/packages/lf20_xwcg9xlf.json', isNew: false },
+            { id: 5, name: 'Taco', price: 3.99, lottieUrl: 'https://assets4.lottiefiles.com/packages/lf20_b3xikwqs.json', isNew: false },
+            { id: 6, name: 'Pizza', price: 7.99, lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_vln1e9m9.json', isNew: false },
+            { id: 7, name: 'Donut', price: 1.49, lottieUrl: 'https://assets5.lottiefiles.com/packages/lf20_2rjx7aef.json', isNew: false },
+            { id: 8, name: 'Popcorn', price: 1.99, lottieUrl: 'https://assets6.lottiefiles.com/packages/lf20_z4s3d4rz.json', isNew: false },
+            { id: 9, name: 'Coke', price: 1.49, lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_a2edpgyt.json', isNew: false },
+            { id: 10, name: 'Icecream', price: 5.99, lottieUrl: 'https://assets7.lottiefiles.com/packages/lf20_pr0kgnwb.json', isNew: false },
+            { id: 11, name: 'Cookie', price: 3.99, lottieUrl: 'https://assets4.lottiefiles.com/packages/lf20_sl0tor3g.json', isNew: false },
+            { id: 12, name: 'Flan', price: 7.99, lottieUrl: 'https://assets1.lottiefiles.com/packages/lf20_rsj3i2gm.json', isNew: false },
         ];
 
-        // --- STATE ---
+        // --- СТАН ---
         let cart = {}; // { productId: quantity }
-        let currentPage = 'catalog-page';
-        let isPaymentInfoFilled = false;
-        let isShippingInfoFilled = false;
-        let paymentInfo = { lastFour: '' };
-        let shippingInfo = { name: '', phone: '', address: '' };
 
-
-        // --- DOM ELEMENTS ---
+        // --- DOM ЕЛЕМЕНТИ ---
         const catalogGrid = document.getElementById('catalog-grid');
-        const viewOrderBtn = document.getElementById('view-order-btn');
-        const orderList = document.getElementById('order-list');
-        const payFromOrderBtn = document.getElementById('pay-from-order-btn');
-        const checkoutSummary = document.getElementById('checkout-summary');
-        const checkoutTotalPrice = document.getElementById('checkout-total-price');
-        const finalPayBtn = document.getElementById('final-pay-btn');
-        const proceedBtn = document.getElementById('proceed-btn');
-        const saveShippingBtn = document.getElementById('save-shipping-btn');
-        const backToCatalogBtn = document.getElementById('back-to-catalog-btn');
-        const closeCheckoutBtn = document.getElementById('close-checkout-btn');
+        const starModal = document.getElementById('star-modal');
+        const modalLottie = document.getElementById('modal-lottie');
+        const modalProductName = document.getElementById('modal-product-name');
+        const confirmStarPaymentBtn = document.getElementById('confirm-star-payment');
 
-        // Payment Form Elements
-        const cardNumberInput = document.getElementById('card-number');
-        const expiryDateInput = document.getElementById('expiry-date');
-        const cvcInput = document.getElementById('cvc');
-        const cardholderNameInput = document.getElementById('cardholder-name');
-        const countryInput = document.getElementById('country');
-        const postcodeInput = document.getElementById('postcode');
-        const toggleCvcBtn = document.getElementById('toggle-cvc');
-        
-        // Shipping Form Inputs
-        const shippingFullNameInput = document.getElementById('shipping-full-name');
-        const shippingPhoneInput = document.getElementById('shipping-phone-number');
-        const shippingAddress1Input = document.getElementById('shipping-address-1');
 
-        // Checkout Display Elements
-        const paymentMethodText = document.getElementById('payment-method-text');
-        const shippingAddressText = document.getElementById('shipping-address-text');
-        const shippingNameText = document.getElementById('shipping-name-text');
-        const shippingPhoneText = document.getElementById('shipping-phone-text');
-        const nameLinkBlock = document.getElementById('name-link-block');
-        const namePlaceholder = document.getElementById('name-placeholder');
-        const nameDetails = document.getElementById('name-details');
-
-        // --- RENDER FUNCTIONS ---
+        // --- ФУНКЦІЇ ВІДОБРАЖЕННЯ ---
         function renderCatalog() {
             catalogGrid.innerHTML = '';
             products.forEach(product => {
                 const quantity = cart[product.id] || 0;
 
-                const buttonHtml = `
-                <div class="w-full mt-2 h-10 relative">
-                    <button class="absolute left-0 top-0 h-full w-[48%] rounded-lg bg-red-500 text-white text-xl font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}" onclick="removeFromCart(${product.id})">-</button>
-                    <button class="absolute right-0 top-0 h-full rounded-lg text-white font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'w-[48%]' : 'w-full'} ${product.isNew && quantity === 0 ? 'bg-[#27ae60]' : 'bg-[#f39c12]'}" onclick="addToCart(${product.id})">
-                        <span class="absolute inset-0 flex items-center justify-center text-sm transition-opacity duration-150 ${quantity > 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}">${product.isNew ? 'BUY' : 'ADD'}</span>
-                        <span class="absolute inset-0 flex items-center justify-center text-xl transition-opacity duration-150 ${quantity > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}">+</span>
+                const buttonHtml = product.isStar 
+                ? `
+                    <button class="w-full mt-2 h-10 rounded-lg text-sm font-bold shimmer-btn" style="background-color: #27ae60;" onclick="buyWithStars(${product.id})">
+                        BUY
                     </button>
+                `
+                : `
+                <div class="w-full mt-2 h-10 relative">
+                    <button class="absolute left-0 top-0 h-full w-[48%] rounded-lg text-white text-xl font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}" style="background-color: #e74c3c;" onclick="removeFromCart(${product.id})">-</button>
+                    <div class="absolute right-0 top-0 h-full rounded-lg text-white font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'w-[48%]' : 'w-full'}" style="background-color: #f39c12;">
+                        <span class="absolute inset-0 flex items-center justify-center text-sm transition-opacity duration-150 ${quantity > 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}" onclick="addToCart(${product.id})">ADD</span>
+                        <span class="absolute inset-0 flex items-center justify-center text-xl transition-opacity duration-150 ${quantity > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}" onclick="addToCart(${product.id})">+</span>
+                    </div>
                 </div>`;
 
-                const itemHtml = `
-                    <div class="rounded-xl p-3 flex flex-col items-center justify-between text-center">
-                        <div class="relative w-full">
-                            <div class="item-emoji">${product.emoji}</div>
-                            ${quantity > 0 ? `<div class="item-badge">${quantity}</div>` : ''}
+                const itemHtml = document.createElement('div');
+                itemHtml.className = 'product-card';
+                itemHtml.innerHTML = `
+                    <div class="relative w-full">
+                        <lottie-player src="${product.lottieUrl}" background="transparent" speed="1" style="margin: 0 auto;"></lottie-player>
+                        ${quantity > 0 ? `<div class="item-badge">${quantity}</div>` : ''}
+                    </div>
+                    <div>
+                        <div class="font-semibold text-sm flex items-center justify-center space-x-1">
+                            <span>${product.name}</span>
+                            ${product.isNew ? `<span class="new-badge">NEW</span>` : ''}
+                            ${product.isStar ? `<span class="text-yellow-400 text-xs">★</span>` : ''}
                         </div>
-                        <div>
-                            <div class="font-semibold text-sm flex items-center justify-center space-x-1">
-                                <span>${product.name}</span>
-                                ${product.isNew ? '<span class="new-badge">NEW</span><i class="fas fa-star text-yellow-400 text-xs"></i>' : ''}
-                            </div>
-                            <p class="text-gray-500 text-sm font-bold mb-2">$${product.price.toFixed(2)}</p>
-                        </div>
-                        ${buttonHtml}
-                    </div>`;
-                catalogGrid.innerHTML += itemHtml;
-            });
-            updateViewOrderButton();
-        }
-
-        function renderOrder() {
-            orderList.innerHTML = '';
-            let totalPrice = 0;
-            const hasItems = Object.keys(cart).length > 0;
-
-            if (!hasItems) {
-                 orderList.innerHTML = '<p class="text-center text-gray-500">Your order is empty.</p>';
-            } else {
-                for (const productId in cart) {
-                    const product = products.find(p => p.id == productId);
-                    const quantity = cart[productId];
-                    const itemTotal = product.price * quantity;
-                    totalPrice += itemTotal;
-
-                    const itemHtml = `
-                        <div class="flex items-center">
-                            <div class="text-4xl mr-4">${product.emoji}</div>
-                            <div class="flex-grow">
-                                <p class="font-bold">${product.name} <span class="text-orange-500">x${quantity}</span></p>
-                                <p class="text-sm text-gray-500">${product.desc}</p>
-                            </div>
-                            <div class="font-semibold">$${itemTotal.toFixed(2)}</div>
-                        </div>`;
-                    orderList.innerHTML += itemHtml;
-                }
-            }
-            payFromOrderBtn.textContent = `PAY $${totalPrice.toFixed(2)}`;
-            payFromOrderBtn.disabled = !hasItems;
-        }
-        
-        function renderCheckout() {
-            checkoutSummary.innerHTML = '';
-            let totalPrice = 0;
-
-            for (const productId in cart) {
-                const product = products.find(p => p.id == productId);
-                const quantity = cart[productId];
-                const itemTotal = product.price * quantity;
-                totalPrice += itemTotal;
-                const itemHtml = `
-                    <div class="flex justify-between items-center text-sm">
-                        <div class="flex items-center"><span class="mr-2">${product.emoji}</span><span>${product.name} x${quantity}</span></div>
-                        <span>$${itemTotal.toFixed(2)}</span>
-                    </div>`;
-                checkoutSummary.innerHTML += itemHtml;
-            }
-            checkoutSummary.innerHTML += `<div class="flex justify-between items-center text-sm text-gray-500"><span>Free Delivery</span><span>$0.00</span></div>`;
-            checkoutTotalPrice.textContent = `$${totalPrice.toFixed(2)}`;
-            finalPayBtn.textContent = `PAY $${totalPrice.toFixed(2)}`;
-
-            // Update payment info display
-            if (isPaymentInfoFilled) {
-                paymentMethodText.textContent = `Card **** ${paymentInfo.lastFour}`;
-                paymentMethodText.classList.remove('text-blue-500');
-                paymentMethodText.classList.add('text-gray-700');
-            } else {
-                paymentMethodText.textContent = 'Add payment method';
-                paymentMethodText.classList.add('text-blue-500');
-                paymentMethodText.classList.remove('text-gray-700');
-            }
-
-            // Update shipping info display
-            if (isShippingInfoFilled) {
-                shippingAddressText.textContent = shippingInfo.address;
-                shippingAddressText.classList.remove('text-blue-500');
-                shippingAddressText.classList.add('text-gray-700');
+                        <p class="text-gray-500 text-sm font-bold mb-1">
+                            ${product.isStar ? `${product.price} ★` : `$${product.price.toFixed(2)}`}
+                        </p>
+                    </div>
+                    ${buttonHtml}
+                `;
+                catalogGrid.appendChild(itemHtml);
                 
-                shippingNameText.textContent = shippingInfo.name;
-                shippingPhoneText.textContent = shippingInfo.phone;
-                namePlaceholder.style.display = 'none';
-                nameDetails.style.display = 'block';
-
-            } else {
-                 shippingAddressText.textContent = 'Add shipping address';
-                 shippingAddressText.classList.add('text-blue-500');
-                 shippingAddressText.classList.remove('text-gray-700');
-                 
-                 namePlaceholder.style.display = 'block';
-                 nameDetails.style.display = 'none';
-            }
+                const lottiePlayer = itemHtml.querySelector('lottie-player');
+                lottiePlayer.addEventListener('click', () => lottiePlayer.play());
+            });
+            updateMainButton();
         }
 
-        // --- LOGIC & EVENT HANDLERS ---
+        // --- ЛОГІКА ТА ОБРОБНИКИ ПОДІЙ ---
         function addToCart(productId) {
             cart[productId] = (cart[productId] || 0) + 1;
             renderCatalog();
         }
 
         function removeFromCart(productId) {
-            if (cart[productId] > 1) cart[productId]--;
-            else delete cart[productId];
+            if (cart[productId] > 1) {
+                cart[productId]--;
+            } else {
+                delete cart[productId];
+            }
             renderCatalog();
         }
 
-        function updateViewOrderButton() {
-            const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
-            viewOrderBtn.disabled = totalItems === 0;
+        function calculateTotal() {
+            let total = { price: 0, items: 0 };
+            for (const productId in cart) {
+                const product = products.find(p => p.id == productId);
+                const quantity = cart[productId];
+                total.price += product.price * quantity;
+                total.items += quantity;
+            }
+            return total;
+        }
+
+        function updateMainButton() {
+            const total = calculateTotal();
+            if (total.items > 0) {
+                tg.MainButton.setText(`View Order ($${total.price.toFixed(2)})`);
+                tg.MainButton.show();
+            } else {
+                tg.MainButton.hide();
+            }
         }
         
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            currentPage = pageId;
+        function buyWithStars(productId) {
+            const product = products.find(p => p.id == productId);
+            modalLottie.load(product.lottieUrl);
+            modalProductName.textContent = product.name;
+            starModal.classList.add('visible');
+
+            // Зберігаємо ID товару для обробника кнопки
+            confirmStarPaymentBtn.dataset.productId = productId;
+        }
+
+        function closeStarModal() {
+            starModal.classList.remove('visible');
+        }
+
+        function handleStarPayment() {
+            const productId = this.dataset.productId;
+            const product = products.find(p => p.id == productId);
+
+            // Це імітація. У реальному додатку вам потрібно буде згенерувати
+            // посилання на інвойс через ваш бекенд та Bot API.
+            const invoiceLink = `https://t.me/invoice/example`; // Замініть на реальне посилання
             
-            if (pageId === 'order-page') renderOrder();
-            if (pageId === 'checkout-page') renderCheckout();
-        }
-
-        viewOrderBtn.addEventListener('click', () => showPage('order-page'));
-        payFromOrderBtn.addEventListener('click', () => showPage('checkout-page'));
-        closeCheckoutBtn.addEventListener('click', () => showPage('catalog-page'));
-        
-        finalPayBtn.addEventListener('click', () => {
-            if (!isPaymentInfoFilled) {
-                showPage('payment-page');
-            } else if (!isShippingInfoFilled) {
-                showPage('shipping-page');
-            } else {
-                showPage('success-page');
-            }
-        });
-
-        proceedBtn.addEventListener('click', () => {
-            if (!proceedBtn.disabled) {
-                isPaymentInfoFilled = true;
-                paymentInfo.lastFour = cardNumberInput.value.slice(-4);
-                showPage('shipping-page');
-            }
-        });
-
-        saveShippingBtn.addEventListener('click', () => {
-            const name = shippingFullNameInput.value.trim();
-            const phone = shippingPhoneInput.value.trim();
-            const address = shippingAddress1Input.value.trim();
-
-            if (name && phone && address) {
-                isShippingInfoFilled = true;
-                shippingInfo = { name, phone, address };
-                showPage('checkout-page');
-            } else {
-                alert('Please fill in receiver name, phone and address.');
-            }
-        });
-
-        backToCatalogBtn.addEventListener('click', () => {
-            cart = {};
-            isPaymentInfoFilled = false;
-            isShippingInfoFilled = false;
-            renderCatalog();
-            showPage('catalog-page');
-        });
-
-        // --- PAYMENT FORM VALIDATION ---
-        [cardNumberInput, expiryDateInput, cvcInput, cardholderNameInput, countryInput, postcodeInput].forEach(input => {
-            input.addEventListener('input', () => validateField(input));
-        });
-
-        function validateField(input) {
-            const id = input.id;
-            const label = document.getElementById(`${id}-label`);
-            let isValid = false;
-            let errorMsg = '', defaultLabel = '';
-
-            switch (id) {
-                case 'card-number':
-                    isValid = validateCardNumber(input.value);
-                    errorMsg = "Incomplete card number";
-                    defaultLabel = "Card Number";
-                    break;
-                case 'expiry-date':
-                    isValid = validateExpiryDate(input.value);
-                    errorMsg = "Invalid expiry date";
-                    defaultLabel = "Expiry Date";
-                    break;
-                case 'cvc':
-                    isValid = input.value.length === 3;
-                    errorMsg = "Invalid CVC";
-                    defaultLabel = "CVC";
-                    break;
-                case 'cardholder-name':
-                case 'postcode':
-                    isValid = input.value.trim() !== '';
-                    errorMsg = `${id.replace('-', ' ')} is required`;
-                    defaultLabel = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                    break;
-                case 'country':
-                    isValid = input.value !== '';
-                    errorMsg = "Country is required";
-                    defaultLabel = "Country";
-                    break;
-            }
+            tg.openInvoice(invoiceLink, (status) => {
+                if (status === 'paid') {
+                    tg.close();
+                } else if (status === 'cancelled') {
+                    tg.showAlert('Payment was cancelled.');
+                } else if (status === 'failed') {
+                    tg.showAlert('Payment failed. Please try again.');
+                }
+            });
             
-            if (!isValid) {
-                input.classList.add('input-error');
-                label.classList.add('label-error');
-                label.textContent = errorMsg;
-            } else {
-                input.classList.remove('input-error');
-                label.classList.remove('label-error');
-                label.textContent = defaultLabel;
-            }
-            validatePaymentForm();
-        }
-        
-        cardNumberInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '').substring(0, 16);
-            e.target.value = value.replace(/(\d{4})/g, '$1 ').trim();
-        });
-        expiryDateInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '').substring(0, 4);
-            if (value.length > 2) value = value.slice(0, 2) + '/' + value.slice(2);
-            e.target.value = value;
-        });
-        cvcInput.addEventListener('input', (e) => e.target.value = e.target.value.replace(/\D/g, '').substring(0, 3));
-        
-        toggleCvcBtn.addEventListener('click', () => {
-            const isPassword = cvcInput.type === 'password';
-            cvcInput.type = isPassword ? 'text' : 'password';
-            toggleCvcBtn.classList.toggle('fa-eye');
-            toggleCvcBtn.classList.toggle('fa-eye-slash');
-        });
-
-        function validateCardNumber(value) { return value.replace(/\s/g, '').length === 16; }
-        function validateExpiryDate(value) {
-            if (value.length !== 5) return false;
-            const [month, year] = value.split('/');
-            const expMonth = parseInt(month, 10);
-            const expYear = parseInt(year, 10);
-            const currentYear = new Date().getFullYear() % 100;
-            const currentMonth = new Date().getMonth() + 1;
-            if (expMonth < 1 || expMonth > 12) return false;
-            if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) return false;
-            return true;
+            // Після виклику інвойсу закриваємо модальне вікно
+            closeStarModal();
         }
 
-        function validatePaymentForm() {
-            const isFormValid = validateCardNumber(cardNumberInput.value) && validateExpiryDate(expiryDateInput.value) && cvcInput.value.length === 3 && cardholderNameInput.value.trim() !== '' && countryInput.value !== '' && postcodeInput.value.trim() !== '';
-            proceedBtn.disabled = !isFormValid;
-            proceedBtn.classList.toggle('bg-blue-300', !isFormValid);
-            proceedBtn.classList.toggle('cursor-not-allowed', !isFormValid);
-            proceedBtn.classList.toggle('bg-blue-500', isFormValid);
-        }
-        
-        // --- DATA FETCHING & POPULATION ---
-        async function fetchAndPopulateCountries() {
-            try {
-                const response = await fetch('https://restcountries.com/v3.1/all?fields=name,flag,cca2');
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
-                const countries = data
-                    .map(c => ({ name: c.name.common, flag: c.flag, code: c.cca2 }))
-                    .sort((a, b) => a.name.localeCompare(b.name));
-                countries.forEach(c => {
-                    const option = document.createElement('option');
-                    option.value = c.code;
-                    option.textContent = `${c.flag} ${c.name}`;
-                    countryInput.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Failed to fetch countries:', error);
-                const option = document.createElement('option');
-                option.value = 'UA';
-                option.textContent = '🇺🇦 Ukraine';
-                countryInput.appendChild(option);
-            }
-        }
-
-        // --- INITIALIZATION ---
+        // --- ІНІЦІАЛІЗАЦІЯ ---
         document.addEventListener('DOMContentLoaded', () => {
-            renderCatalog();
-            fetchAndPopulateCountries();
-            updateViewOrderButton();
-            validatePaymentForm();
-        });
-    </script>
+            tg.ready();
+            
+            // Налаштування основної кнопки
+            tg.MainButton.textColor = '#FFFFFF';
+            tg.MainButton.color = '#27ae60';
+            tg.MainButton.onClick(() => {
+                const total = calculateTotal();
+                tg.showAlert(`Your order contains ${total.items} items with a total cost of $${total.price.toFixed(2)}.`);
+                // Тут буде логіка переходу на сторінку замовлення
+            });
 
+            confirmStarPaymentBtn.addEventListener('click', handleStarPayment);
+
+            // Рендеримо каталог при завантаженні
+            renderCatalog();
+        });
+
+    </script>
 </body>
 </html>
-
