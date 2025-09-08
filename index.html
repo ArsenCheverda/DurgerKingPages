@@ -1,623 +1,260 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, user-scalable=no">
-  <title>Durger King - Mini App</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--tg-theme-bg-color, #ffffff);
-      color: var(--tg-theme-text-color, #000000);
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-    }
-
-    .page {
-      display: none;
-      flex-direction: column;
-      min-height: 100vh;
-      padding: 15px;
-      box-sizing: border-box;
-    }
-    .page.active { display: flex; }
-
-    /* Сітка товарів (без змін) */
-    #catalog-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      width: 100%;
-    }
-
-    .product-card {
-      background-color: var(--tg-theme-secondary-bg-color, #f2f2f2);
-      border-radius: 12px;
-      padding: 8px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      width: 105px; /* 3 колонки */
-    }
-
-    /* Місце під анімований емодзі */
-    .emoji-box {
-      width: 70px;
-      height: 70px;
-      margin: 0 auto 5px auto;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      user-select: none;
-    }
-    .emoji-box video,
-    .emoji-box img {
-      width: 70px;
-      height: 70px;
-      object-fit: contain;
-      display: block;
-    }
-
-    /* Скелет завантаження */
-    #skeleton-loader {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      width: 100%;
-    }
-    .skeleton-card {
-      width: 105px;
-      height: 180px;
-      border-radius: 12px;
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: skeleton-loading 1.5s infinite linear;
-    }
-    @keyframes skeleton-loading {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    .item-badge {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      background-color: #e74c3c;
-      color: white;
-      font-size: 0.8rem;
-      font-weight: bold;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid var(--tg-theme-bg-color, #fff);
-    }
-
-    .new-badge {
-      background-color: #27ae60;
-      color: white;
-      font-size: 0.6rem;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 6px;
-      text-transform: uppercase;
-    }
-
-    .shimmer-btn {
-      position: relative;
-      overflow: hidden;
-      background-color: var(--tg-theme-button-color, #3390ec);
-      color: var(--tg-theme-button-text-color, #ffffff);
-    }
-    .shimmer-btn::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -150%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
-      transform: skewX(-25deg);
-      animation: shimmer 5s infinite;
-    }
-    @keyframes shimmer {
-      0% { left: -150%; }
-      40% { left: 150%; }
-      100% { left: 150%; }
-    }
-
-    /* Модалка для покупки за зірочки */
-    #star-modal {
-      position: fixed;
-      inset: 0;
-      background-color: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-      z-index: 100;
-    }
-    #star-modal.visible { opacity: 1; visibility: visible; }
-    .modal-content {
-      background-color: var(--tg-theme-secondary-bg-color, #fff);
-      width: 100%;
-      padding: 20px;
-      border-radius: 20px 20px 0 0;
-      text-align: center;
-      transform: translateY(100%);
-      transition: transform 0.3s ease;
-    }
-    #star-modal.visible .modal-content { transform: translateY(0); }
-
-    /* Великий емодзі в модалці */
-    #modal-emoji {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto;
-      display: block;
-      object-fit: contain;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Durger King - Mini App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Сторінка 1: Каталог -->
-  <div id="catalog-page" class="page active">
-    <div id="skeleton-loader"></div>
-    <div id="catalog-grid" style="display: none;"></div>
-  </div>
+    <div class="main-container">
 
-  <!-- Сторінка 2: Замовлення -->
-  <div id="order-page" class="page">
-    <div class="w-full">
-      <h2 class="text-xl font-bold mb-4">YOUR ORDER</h2>
-      <div id="order-list" class="space-y-4"></div>
-      <div class="mt-6 border-t pt-4">
-        <div class="flex justify-between font-bold text-lg">
-          <span>Total</span>
-          <span id="order-total-price">$0.00</span>
+        <!-- ===== Page 1: Catalog ===== -->
+        <div id="catalog-page" class="page active">
+            <div class="header p-4 flex items-center justify-between shadow-sm">
+                <i class="fas fa-times text-xl text-gray-500 cursor-pointer"></i>
+                <div class="font-bold text-lg flex items-center">
+                    <span class="bg-red-500 text-white rounded-md w-7 h-7 flex items-center justify-center mr-2 font-bold">D</span>
+                    Durger King
+                </div>
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-plus text-xl text-gray-500 cursor-pointer"></i>
+                    <i class="fas fa-expand text-xl text-gray-500 cursor-pointer"></i>
+                </div>
+            </div>
+            <div id="catalog-grid" class="flex-grow p-4 grid grid-cols-2 gap-4 overflow-y-auto">
+                <!-- Product items will be injected here by JavaScript -->
+            </div>
+            <div class="bottom-bar p-4">
+                <button id="view-order-btn" class="btn-primary">View Order</button>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Модальне вікно для покупки за зірочки -->
-  <div id="star-modal">
-    <div class="modal-content">
-      <div class="flex justify-end mb-2">
-        <button onclick="closeStarModal()" class="text-gray-400 text-2xl">&times;</button>
-      </div>
-      <!-- ТУТ БУДЕ АНІМ. ЕМОДЗІ -->
-      <video id="modal-emoji" muted playsinline></video>
-      <h2 id="modal-product-name" class="text-2xl font-bold mt-2">Cake</h2>
-      <p class="text-gray-500 mb-4">Durger King</p>
-      <p class="mb-6">Do you want to buy Cake in Durger King for 1 star?</p>
-      <button id="confirm-star-payment" class="w-full py-3 rounded-lg font-semibold shimmer-btn">
-        Confirm and Pay ★ 1 Star
-      </button>
-    </div>
-  </div>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-
-    /*** =======================
-     *  НАСТРОЙКИ / ПРОКСИ
-     * ======================== */
-    // Укажите ваш бекенд-роут, который вернёт JSON вида:
-    // { ok: true, emoji: "🍔", webm: "https://.../file.webm", webp: "https://.../file.webp", width: 512, height: 512 }
-    // Реализация прокси — внизу файла в виде примера на Node/Express.
-    const STICKER_PROXY_URL = '/api/animated-emoji';
-
-    // Кэш: emoji -> {webm, webp, width, height}
-    const animatedEmojiCache = new Map();
-
-    // Получить URLы медиа для эмодзи (webm предпочтительно)
-    async function getAnimatedEmojiMedia(emoji) {
-      if (animatedEmojiCache.has(emoji)) return animatedEmojiCache.get(emoji);
-
-      try {
-        const url = `${STICKER_PROXY_URL}?emoji=${encodeURIComponent(emoji)}`;
-        const res = await fetch(url, { method: 'GET' });
-        if (!res.ok) throw new Error('Proxy HTTP error');
-        const data = await res.json();
-        if (data && data.ok && (data.webm || data.webp)) {
-          animatedEmojiCache.set(emoji, data);
-          return data;
-        }
-      } catch (e) {
-        // молча падаем в graceful fallback (статичний емодзі)
-      }
-      animatedEmojiCache.set(emoji, null);
-      return null;
-    }
-
-    // Вставка “стікер-як-картинка”: video webm (loop one-time), tap to replay.
-    async function mountAnimatedEmoji(containerEl, emoji, size = 70) {
-      containerEl.innerHTML = '';
-      containerEl.style.width = `${size}px`;
-      containerEl.style.height = `${size}px`;
-
-      const media = await getAnimatedEmojiMedia(emoji);
-
-      if (media && media.webm) {
-        const v = document.createElement('video');
-        v.src = media.webm;
-        v.width = size;
-        v.height = size;
-        v.muted = true;
-        v.playsInline = true;
-        v.autoplay = true;     // автостарт
-        v.loop = false;        // по инструкции — не зацикливаем
-        v.preload = 'metadata';
-        v.style.objectFit = 'contain';
-        v.addEventListener('ended', () => {
-          // По завершении оставим последний кадр как постер (браузер так и делает)
-        });
-        v.addEventListener('click', () => {
-          v.currentTime = 0;
-          v.play();
-        });
-        containerEl.appendChild(v);
-        return v;
-      }
-
-      if (media && media.webp) {
-        // Фолбек: статичний webp превью з проксі
-        const img = document.createElement('img');
-        img.src = media.webp;
-        img.width = size;
-        img.height = size;
-        img.alt = emoji;
-        img.draggable = false;
-        containerEl.appendChild(img);
-        return img;
-      }
-
-      // Ultimate fallback: просто символ емодзі
-      const span = document.createElement('span');
-      span.textContent = emoji;
-      span.style.fontSize = Math.floor(size * 0.8) + 'px';
-      containerEl.appendChild(span);
-      return span;
-    }
-
-    /*** =======================
-     *  ДАНІ ТОВАРІВ
-     * ======================== */
-    const products = [
-      { id: 1,  name: 'Cake',     price: 1.00, emoji: '🍰', isNew: true,  isStar: true },
-      { id: 2,  name: 'Burger',   price: 4.99, emoji: '🍔' },
-      { id: 3,  name: 'Fries',    price: 1.49, emoji: '🍟' },
-      { id: 4,  name: 'Hotdog',   price: 3.49, emoji: '🌭' },
-      { id: 5,  name: 'Taco',     price: 3.99, emoji: '🌮' },
-      { id: 6,  name: 'Pizza',    price: 7.99, emoji: '🍕' },
-      { id: 7,  name: 'Donut',    price: 1.49, emoji: '🍩' },
-      { id: 8,  name: 'Popcorn',  price: 1.99, emoji: '🍿' },
-      { id: 9,  name: 'Coke',     price: 1.49, emoji: '🥤' },
-      { id: 10, name: 'Icecream', price: 5.99, emoji: '🍦' },
-      { id: 11, name: 'Cookie',   price: 3.99, emoji: '🍪' },
-      { id: 12, name: 'Flan',     price: 7.99, emoji: '🍮' },
-    ];
-
-    /*** =======================
-     *  СТАН
-     * ======================== */
-    let cart = {};
-    let currentPage = 'catalog-page';
-
-    /*** =======================
-     *  DOM
-     * ======================== */
-    const pages = document.querySelectorAll('.page');
-    const skeletonLoader = document.getElementById('skeleton-loader');
-    const catalogGrid = document.getElementById('catalog-grid');
-    const orderList = document.getElementById('order-list');
-    const orderTotalPrice = document.getElementById('order-total-price');
-    const starModal = document.getElementById('star-modal');
-    const modalProductName = document.getElementById('modal-product-name');
-    const confirmStarPaymentBtn = document.getElementById('confirm-star-payment');
-    const modalEmojiVideo = document.getElementById('modal-emoji');
-
-    /*** =======================
-     *  ВІДОБРАЖЕННЯ
-     * ======================== */
-    function renderSkeleton() {
-      let skeletonHtml = '';
-      for (let i = 0; i < 12; i++) {
-        skeletonHtml += '<div class="skeleton-card"></div>';
-      }
-      skeletonLoader.innerHTML = skeletonHtml;
-    }
-
-    function productControlsHtml(product, quantity) {
-      if (product.isStar) {
-        return `<button class="w-full mt-2 h-9 rounded-lg text-sm font-bold shimmer-btn" style="background-color: #27ae60;" onclick="buyWithStars(${product.id})">BUY</button>`;
-      }
-      return `
-        <div class="w-full mt-2 h-9 relative">
-          <button class="absolute left-0 top-0 h-full w-[48%] rounded-lg text-white text-xl font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}" style="background-color: #e74c3c;" onclick="removeFromCart(${product.id})">-</button>
-          <div class="absolute right-0 top-0 h-full rounded-lg text-white font-bold transition-all duration-300 ease-in-out ${quantity > 0 ? 'w-[48%]' : 'w-full'}" style="background-color: #f39c12;">
-            <span class="absolute inset-0 flex items-center justify-center text-sm transition-opacity duration-150 ${quantity > 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}" onclick="addToCart(${product.id})">ADD</span>
-            <span class="absolute inset-0 flex items-center justify-center text-xl transition-opacity duration-150 ${quantity > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}" onclick="addToCart(${product.id})">+</span>
-          </div>
-        </div>`;
-    }
-
-    async function renderCatalog() {
-      catalogGrid.innerHTML = '';
-      for (const product of products) {
-        const quantity = cart[product.id] || 0;
-
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        card.innerHTML = `
-          <div class="relative w-full">
-            <div class="emoji-box" data-emoji="${product.emoji}" aria-label="${product.name}"></div>
-            ${quantity > 0 ? `<div class="item-badge">${quantity}</div>` : ''}
-          </div>
-          <div>
-            <div class="font-semibold text-xs flex items-center justify-center space-x-1 h-8">
-              <span>${product.name}</span>
-              ${product.isNew ? `<span class="new-badge">NEW</span>` : ''}
-              ${product.isStar ? `<span class="text-yellow-400 text-xs">★</span>` : ''}
+        <!-- ===== Page 2: Your Order ===== -->
+        <div id="order-page" class="page">
+            <div class="header p-4 flex items-center justify-between shadow-sm">
+                <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer" onclick="showPage('catalog-page')"></i>
+                 <div class="font-bold text-lg flex items-center">
+                    <span class="bg-red-500 text-white rounded-md w-7 h-7 flex items-center justify-center mr-2 font-bold">D</span>
+                    Durger King
+                </div>
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-plus text-xl text-gray-500 cursor-pointer"></i>
+                    <i class="fas fa-expand text-xl text-gray-500 cursor-pointer"></i>
+                </div>
             </div>
-            <p class="text-gray-500 text-sm font-bold mb-1">
-              ${product.isStar ? `${product.price} ★` : `$${product.price.toFixed(2)}`}
-            </p>
-          </div>
-          ${productControlsHtml(product, quantity)}
-        `;
-        catalogGrid.appendChild(card);
-
-        // смонтировать анимированный емодзі (loop once)
-        const box = card.querySelector('.emoji-box');
-        const node = await mountAnimatedEmoji(box, product.emoji, 70);
-        // Небольшой автоплей (1 раз): если это видео, дожмем play()
-        if (node && node.tagName === 'VIDEO') {
-          try { node.play().catch(()=>{}); } catch(e){}
-        }
-      }
-      updateMainButton();
-    }
-
-    function renderOrder() {
-      let orderHtml = '';
-      const total = calculateTotal();
-      if (total.items === 0) {
-        orderHtml = '<p class="text-center text-gray-500">Your order is empty.</p>';
-      } else {
-        const blocks = [];
-        for (const productId in cart) {
-          const product = products.find(p => p.id == productId);
-          if (!product) continue;
-          const quantity = cart[productId];
-          const itemTotal = product.price * quantity;
-          const id = `order-emoji-${product.id}-${Date.now()}`;
-          blocks.push(`
-            <div class="flex items-center">
-              <div class="emoji-box" id="${id}" style="width:50px;height:50px;margin-right:15px;"></div>
-              <div class="flex-grow">
-                <p class="font-bold">${product.name} <span class="text-gray-500 font-normal">x${quantity}</span></p>
-              </div>
-              <div class="font-semibold">$${itemTotal.toFixed(2)}</div>
+            <div class="flex-grow p-4 overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">YOUR ORDER</h2>
+                    <button class="text-green-600 font-semibold" onclick="showPage('catalog-page')">Edit</button>
+                </div>
+                <div id="order-list" class="space-y-4">
+                    <!-- Order items will be injected here -->
+                </div>
+                <div class="mt-6">
+                    <label for="comment" class="text-gray-600">Add comment...</label>
+                    <textarea id="comment" rows="3" class="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Any special requests, details, final wishes etc."></textarea>
+                </div>
             </div>
-          `);
-        }
-        orderHtml = blocks.join('');
-      }
-      orderList.innerHTML = orderHtml;
+            <div class="bottom-bar p-4">
+                <button id="pay-from-order-btn" class="btn-primary">PAY $0.00</button>
+            </div>
+        </div>
 
-      // Смонтировать эмодзи для заказов
-      for (const productId in cart) {
-        const product = products.find(p => p.id == productId);
-        if (!product) continue;
-        const el = document.getElementById(`order-emoji-${product.id}-${Object.keys(cart).length === 1 ? '0' : ''}`) || document.querySelector(`#order-list .emoji-box[id^="order-emoji-${product.id}-"]`);
-        if (el) mountAnimatedEmoji(el, product.emoji, 50);
-      }
+        <!-- ===== Page 3: Checkout ===== -->
+        <div id="checkout-page" class="page">
+            <div class="header p-4 flex items-center shadow-sm">
+                 <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer mr-4" onclick="showPage('order-page')"></i>
+                <h2 class="text-lg font-bold">Checkout (Test)</h2>
+                <div class="flex-grow"></div>
+                <i id="close-checkout-btn" class="fas fa-times text-xl text-gray-500 cursor-pointer"></i>
+            </div>
+            <div class="flex-grow p-4 overflow-y-auto bg-gray-50">
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex items-center">
+                         <div class="checkout-emoji-wrapper bg-yellow-400 p-2 rounded-lg mr-4">
+                             <picture width="48" height="48">
+                                <source type="application/x-tgsticker" srcset="https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/French%20Fries.tgs">
+                                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Fries" width="48" height="48">
+                            </picture>
+                         </div>
+                        <div>
+                            <p class="font-bold">Order #160546591</p>
+                            <p class="text-sm text-gray-500">Perfect Lunch from Durger King.</p>
+                        </div>
+                    </div>
+                    <div id="checkout-summary" class="mt-4 space-y-2 border-t pt-4">
+                        <!-- Checkout items summary here -->
+                    </div>
+                    <div class="flex justify-between font-bold text-lg mt-4 border-t pt-4">
+                        <span>Total</span>
+                        <span id="checkout-total-price">$0.00</span>
+                    </div>
+                </div>
 
-      orderTotalPrice.textContent = `$${total.price.toFixed(2)}`;
-    }
+                <div class="bg-white p-4 rounded-lg shadow-sm mt-4">
+                    <div class="flex items-center justify-between cursor-pointer py-2" onclick="showPage('payment-page')">
+                        <div class="flex items-center">
+                            <i class="fas fa-credit-card text-gray-500 w-6 text-center mr-3"></i>
+                            <div id="payment-method-details">
+                                <p class="font-semibold">Payment method</p>
+                                <p id="payment-method-text" class="text-sm text-blue-500">Add payment method</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                     <div class="border-t"></div>
+                    <div class="flex items-center justify-between cursor-pointer py-2" onclick="showPage('shipping-page')">
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt text-gray-500 w-6 text-center mr-3"></i>
+                             <div>
+                                <p class="font-semibold">Shipping address</p>
+                                <p id="shipping-address-text" class="text-sm text-blue-500">Add shipping address</p>
+                            </div>
+                        </div>
+                         <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                     <div class="border-t"></div>
+                    <div id="name-link-block" class="flex items-center justify-between cursor-pointer py-2" onclick="showPage('shipping-page')">
+                         <div class="flex items-center">
+                            <i class="fas fa-user text-gray-500 w-6 text-center mr-3"></i>
+                            <div id="name-placeholder">
+                                 <p class="font-semibold">Name</p>
+                            </div>
+                            <div id="name-details" style="display: none;">
+                                <p id="shipping-name-text" class="font-semibold"></p>
+                                <p id="shipping-phone-text" class="text-sm text-gray-500"></p>
+                            </div>
+                        </div>
+                         <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bottom-bar p-4">
+                <button id="final-pay-btn" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg">PAY $0.00</button>
+            </div>
+        </div>
+        
+        <!-- ===== Page 4: Payment Info ===== -->
+        <div id="payment-page" class="page">
+             <div class="header p-4 flex items-center shadow-sm">
+                 <i class="fas fa-times text-xl text-gray-500 cursor-pointer" onclick="showPage('checkout-page')"></i>
+                <div class="flex-grow text-center">
+                    <h2 class="text-lg font-bold">Payment info</h2>
+                </div>
+                <div class="w-5"></div> <!-- Placeholder to balance the title -->
+            </div>
+            <div id="payment-form" class="flex-grow p-4 overflow-y-auto">
+                <p class="text-blue-600 font-semibold mb-2">Enter your card information</p>
+                <div class="space-y-4 mb-6">
+                    <div class="relative">
+                        <label for="card-number" id="card-number-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Card Number</label>
+                        <input type="text" id="card-number" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors duration-200" placeholder="0000 0000 0000 0000">
+                    </div>
+                    <div class="flex space-x-4">
+                        <div class="relative w-1/2">
+                            <label for="expiry-date" id="expiry-date-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Expiry Date</label>
+                            <input type="text" id="expiry-date" placeholder="MM/YY" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors duration-200">
+                        </div>
+                        <div class="relative w-1/2">
+                             <label for="cvc" id="cvc-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-500 transition-colors duration-200">CVC</label>
+                            <input type="password" id="cvc" placeholder="•••" class="w-full p-3 border-2 border-gray-300 rounded-lg pr-10 focus:outline-none focus:border-blue-500 transition-colors duration-200">
+                            <i class="fas fa-eye absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 cursor-pointer" id="toggle-cvc"></i>
+                        </div>
+                    </div>
+                     <div class="relative">
+                        <label for="cardholder-name" id="cardholder-name-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Cardholder Name</label>
+                        <input type="text" id="cardholder-name" placeholder="Cardholder Name" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors duration-200">
+                    </div>
+                </div>
 
-    function showPage(pageId) {
-      currentPage = pageId;
-      pages.forEach(page => page.classList.toggle('active', page.id === pageId));
+                <p class="text-blue-600 font-semibold mb-2">Enter your billing address</p>
+                 <div class="space-y-4">
+                    <div class="relative">
+                        <label for="country" id="country-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Country</label>
+                        <select id="country" class="w-full p-3 border-2 border-gray-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 transition-colors duration-200">
+                            <option value="">Select Country</option>
+                            <!-- Countries will be populated by JS -->
+                        </select>
+                    </div>
+                     <div class="relative">
+                        <label for="postcode" id="postcode-label" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-blue-600 transition-colors duration-200">Postcode</label>
+                        <input type="text" id="postcode" placeholder="Postcode" maxlength="10" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors duration-200">
+                    </div>
+                </div>
 
-      if (pageId === 'catalog-page') {
-        tg.BackButton.hide();
-        updateMainButton();
-      } else if (pageId === 'order-page') {
-        renderOrder();
-        tg.BackButton.show();
-        const total = calculateTotal();
-        tg.MainButton.setText(`Pay $${total.price.toFixed(2)}`);
-        tg.MainButton.show();
-      }
-    }
+                <div class="flex items-start mt-6">
+                    <input type="checkbox" id="save-payment" class="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="save-payment" class="ml-3 text-sm text-gray-600">
+                        Save Payment Information
+                        <p class="text-xs text-gray-500">Saving payment details is only available with 2-Step Verification.</p>
+                    </label>
+                </div>
+            </div>
+            <div class="bottom-bar p-4">
+                 <button id="proceed-btn" class="w-full bg-blue-300 text-white font-bold py-3 rounded-lg cursor-not-allowed" disabled>PROCEED TO CHECKOUT</button>
+            </div>
+        </div>
 
-    /*** =======================
-     *  ЛОГІКА
-     * ======================== */
-    function addToCart(productId) {
-      cart[productId] = (cart[productId] || 0) + 1;
-      renderCatalog();
-    }
-    function removeFromCart(productId) {
-      if (cart[productId] > 1) cart[productId]--;
-      else delete cart[productId];
-      renderCatalog();
-    }
+        <!-- ===== Page 5: Shipping Info ===== -->
+        <div id="shipping-page" class="page">
+             <div class="header p-4 flex items-center shadow-sm">
+                 <i class="fas fa-times text-xl text-gray-500 cursor-pointer" onclick="showPage('checkout-page')"></i>
+                <div class="flex-grow text-center">
+                    <h2 class="text-lg font-bold">Shipping Information</h2>
+                </div>
+                 <div class="w-5"></div>
+            </div>
+             <div class="flex-grow p-4 overflow-y-auto space-y-4">
+                <input type="text" id="shipping-address-1" placeholder="Address 1 (Street)" class="w-full p-3 border rounded-lg">
+                <input type="text" placeholder="Address 2 (Street)" class="w-full p-3 border rounded-lg">
+                <input type="text" placeholder="City" class="w-full p-3 border rounded-lg">
+                <input type="text" placeholder="State" class="w-full p-3 border rounded-lg">
+                <select id="shipping-country" class="w-full p-3 border rounded-lg bg-white">
+                    <option>Country</option>
+                    <option>United States</option>
+                    <option>Canada</option>
+                </select>
+                <input type="text" placeholder="Postcode" class="w-full p-3 border rounded-lg">
+                
+                <h3 class="font-semibold pt-4">Receiver</h3>
+                <input type="text" id="shipping-full-name" placeholder="Full Name" class="w-full p-3 border rounded-lg">
+                <input type="tel" id="shipping-phone-number" placeholder="Phone Number" class="w-full p-3 border rounded-lg">
 
-    function calculateTotal() {
-      let total = { price: 0, items: 0 };
-      for (const productId in cart) {
-        const product = products.find(p => p.id == productId && !p.isStar);
-        if (product) {
-          const quantity = cart[productId];
-          total.price += product.price * quantity;
-          total.items += quantity;
-        }
-      }
-      return total;
-    }
+                 <div class="flex items-center mt-2">
+                    <input type="checkbox" id="save-shipping" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="save-shipping" class="ml-3 text-sm text-gray-600">Save Shipping Information</label>
+                </div>
+             </div>
+             <div class="bottom-bar p-4">
+                 <button id="save-shipping-btn" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg">SAVE & CONTINUE</button>
+            </div>
+        </div>
+        
+        <!-- ===== Page 6: Success ===== -->
+        <div id="success-page" class="page">
+            <div class="flex-grow flex flex-col items-center justify-center text-center p-8">
+                <div id="success-animation" class="w-24 h-24 mb-6">
+                    <picture width="96" height="96">
+                        <source type="application/x-tgsticker" srcset="https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Objects/Party%20Popper.tgs">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Success" width="96" height="96">
+                    </picture>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Thank You!</h2>
+                <p class="text-gray-600 mb-8">Your order has been placed successfully.</p>
+                <button id="back-to-catalog-btn" class="btn-primary w-full max-w-xs">Back to Catalog</button>
+            </div>
+        </div>
+        
+    </div>
 
-    function updateMainButton() {
-      const total = calculateTotal();
-      if (total.items > 0) {
-        tg.MainButton.setText(`View Order ($${total.price.toFixed(2)})`);
-        tg.MainButton.show();
-      } else {
-        tg.MainButton.hide();
-      }
-    }
+    <!-- RLottie library for animated stickers -->
+    <script src="rlottie.js"></script>
+    <!-- Main application logic -->
+    <script src="app.js"></script>
 
-    async function buyWithStars(productId) {
-      const product = products.find(p => p.id == productId);
-      modalProductName.textContent = product.name;
-      // подменяем содержимое модалки на аним. емодзі
-      modalEmojiVideo.src = '';
-      modalEmojiVideo.pause();
-      modalEmojiVideo.currentTime = 0;
-      const media = await getAnimatedEmojiMedia(product.emoji);
-      if (media && media.webm) {
-        modalEmojiVideo.src = media.webm;
-        modalEmojiVideo.autoplay = true;
-        modalEmojiVideo.loop = false;
-        modalEmojiVideo.muted = true;
-        modalEmojiVideo.playsInline = true;
-        modalEmojiVideo.onended = null;
-      } else {
-        // если нет webm — покажем статик через data-uri эмодзи
-        const pngFallback = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="96">'+product.emoji+'</text></svg>')}`;
-        modalEmojiVideo.poster = pngFallback;
-      }
-      starModal.classList.add('visible');
-      confirmStarPaymentBtn.dataset.productId = productId;
-    }
-
-    function closeStarModal() {
-      starModal.classList.remove('visible');
-      modalEmojiVideo.pause();
-    }
-
-    function handleStarPayment() {
-      const invoiceLink = `https://t.me/invoice/example`;
-      tg.openInvoice(invoiceLink, (status) => {
-        if (status === 'paid') tg.close();
-      });
-      closeStarModal();
-    }
-
-    /*** =======================
-     *  ІНІЦІАЛІЗАЦІЯ
-     * ======================== */
-    document.addEventListener('DOMContentLoaded', () => {
-      tg.ready();
-
-      tg.MainButton.textColor = '#FFFFFF';
-      tg.MainButton.color = '#27ae60';
-      tg.MainButton.onClick(() => {
-        if (currentPage === 'catalog-page') {
-          showPage('order-page');
-        } else if (currentPage === 'order-page') {
-          const total = calculateTotal();
-          tg.showAlert(`Final amount to pay: $${total.price.toFixed(2)}`);
-          // Тут буде логіка реальної оплати
-        }
-      });
-
-      tg.BackButton.onClick(() => showPage('catalog-page'));
-      confirmStarPaymentBtn.addEventListener('click', handleStarPayment);
-
-      renderSkeleton();
-      setTimeout(async () => {
-        catalogGrid.style.display = 'flex';
-        skeletonLoader.style.display = 'none';
-        await renderCatalog();
-      }, 500);
-    });
-
-    // Экспорт для onclick в HTML
-    window.addToCart = addToCart;
-    window.removeFromCart = removeFromCart;
-    window.buyWithStars = buyWithStars;
-    window.closeStarModal = closeStarModal;
-  </script>
-
-  <!--
-    ================================
-    === BACKEND ПРОКСИ (пример) ===
-    ================================
-    1) Этот фронт ожидает эндпоинт:
-       GET /api/animated-emoji?emoji=🍔
-       -> { ok: true, emoji: "🍔", webm: "https://api.telegram.org/file/bot<token>/<path>.webm", webp: "https://.../file.webp", width: 512, height: 512 }
-
-    2) Как получить аним. эмодзи на бэкенде:
-       - Официальный способ (MTProto):
-         messages.getStickerSet(inputStickerSetAnimatedEmoji)
-         Далее найдите документ, где атрибут alt == нужный emoji, скачайте файл (webm).
-
-       - Через Bot API (проще):
-         a) Вызвать getStickerSet с именем набора анимированных эмодзи (аналог набора Animated Emoji).
-         b) В отданных стикерах найти тот, у которого .emoji == запрошенный emoji и это video sticker / анимированный.
-         c) Вызвать getFile(file_id) и вернуть клиенту ссылку:
-            https://api.telegram.org/file/bot<YOUR_BOT_TOKEN>/<file_path>
-
-    3) Пример Node/Express (псевдокод):
-      const express = require('express');
-      const fetch = require('node-fetch');
-      const app = express();
-      const BOT_TOKEN = process.env.BOT_TOKEN;
-      const SET_NAME = process.env.ANIMATED_EMOJI_SET || 'AnimatedEmoji'; // имя набора; проверьте актуальное
-
-      app.get('/api/animated-emoji', async (req, res) => {
-        try {
-          const emoji = req.query.emoji;
-          if (!emoji) return res.json({ ok:false });
-
-          // 1) получить сет
-          const setResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getStickerSet?name=${encodeURIComponent(SET_NAME)}`);
-          const setJson = await setResp.json();
-          if (!setJson.ok) return res.json({ ok:false });
-
-          // 2) найти нужный стикер по emoji
-          const sticker = (setJson.result.stickers || []).find(s => s.emoji === emoji);
-          if (!sticker) return res.json({ ok:false });
-
-          // 3) получить файл
-          const fileResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${sticker.file_id}`);
-          const fileJson = await fileResp.json();
-          if (!fileJson.ok) return res.json({ ok:false });
-
-          const filePath = fileJson.result.file_path;
-          const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
-
-          // Простейшая типизация
-          const isWebm = filePath.endsWith('.webm') || sticker.is_video;
-          const payload = { ok:true, emoji, width:512, height:512 };
-          if (isWebm) payload.webm = fileUrl; else payload.webp = fileUrl;
-          res.json(payload);
-        } catch (e) {
-          res.json({ ok:false });
-        }
-      });
-
-      // Важно: не отдавайте BOT_TOKEN клиенту!
-  -->
 </body>
 </html>
