@@ -1,7 +1,7 @@
 // --- DATA ---
 const products = [
     { id: 1, name: 'Cake', price: 1.00, tgsUrl: 'https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Slice%20of%20Cake.tgs', fallback: '🍰', isNew: true, desc: 'A slice of heaven' },
-    { id: 2, name: 'Burger', price: 2.99, tgsUrl: 'https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Hamburger.tgs', fallback: '🍔', isNew: false, desc: 'Classic beef burger' },
+    { id: 2, name: 'Burger', price: 4.99, tgsUrl: 'https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Hamburger.tgs', fallback: '🍔', isNew: false, desc: 'Classic beef burger' },
     { id: 3, name: 'Fries', price: 1.49, tgsUrl: 'https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/French%20Fries.tgs', fallback: '🍟', isNew: false, desc: 'Crispy golden fries' },
     { id: 4, name: 'Hotdog', price: 3.49, tgsUrl: 'https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Hot%20Dog.tgs', fallback: '🌭', isNew: false, desc: 'Grilled to perfection' },
     { id: 5, name: 'Taco', price: 3.99, tgsUrl: 'https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Taco.tgs', fallback: '🌮', isNew: false, desc: 'Mucho más' },
