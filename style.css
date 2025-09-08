@@ -2,40 +2,47 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #f0f2f5; /* Slightly off-white for a softer look */
+    background-color: #eef2f5;
+    /* Prevent scrolling on the body to allow inner elements to scroll */
+    height: 100vh;
+    overflow: hidden;
+}
+
+:root {
+    --tg-theme-bg-color: #ffffff;
+    --tg-theme-button-color: #27ae60;
+    --tg-theme-button-text-color: #ffffff;
 }
 
 .main-container {
     max-width: 420px;
     margin: auto;
-    background-color: #ffffff;
-    min-height: 100vh;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    background-color: var(--tg-theme-bg-color);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-.page {
+.view {
     display: none;
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
+    width: 100%;
 }
 
-.page.active {
+.view.active {
     display: flex;
 }
 
 .header {
-    background-color: #ffffff;
+    background-color: var(--tg-theme-bg-color);
     border-bottom: 1px solid #e0e0e0;
-}
-
-.bottom-bar {
-    background-color: #ffffff;
-    border-top: 1px solid #e0e0e0;
+    flex-shrink: 0;
 }
 
 .btn-primary {
-    background-color: #27ae60;
-    color: white;
+    background-color: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
     font-weight: 600;
     border-radius: 12px;
     padding: 14px;
@@ -43,61 +50,21 @@ body {
     width: 100%;
     transition: all 0.2s;
 }
-
-.btn-primary:hover {
-    background-color: #229954;
-}
-
 .btn-primary:disabled {
     background-color: #95a5a6;
     cursor: not-allowed;
 }
 
-.btn-secondary {
-    background-color: #f39c12;
-    color: white;
-    font-weight: 600;
-    border-radius: 10px;
-    padding: 8px 12px;
-    transition: background-color 0.2s;
-}
-
-.btn-secondary:hover {
-    background-color: #e67e22;
-}
-
-.item-emoji-picture {
+.lottie-emoji {
     width: 56px;
     height: 56px;
-    margin-bottom: 8px;
-    display: block; /* Important for layout */
+    margin: 0 auto 8px; /* Center horizontally */
 }
-
-.order-item-emoji-picture {
-    width: 48px;
-    height: 48px;
-    margin-right: 1rem;
-}
-
-.checkout-summary-emoji-picture {
-    width: 20px;
-    height: 20px;
-    margin-right: 8px;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.checkout-emoji-wrapper picture {
-    width: 48px;
-    height: 48px;
-    display: block;
-}
-
 
 .item-badge {
     position: absolute;
     top: -8px;
-    right: -8px;
+    right: 15%; /* Adjust badge position */
     background-color: #e74c3c;
     color: white;
     font-size: 0.75rem;
@@ -108,7 +75,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1; /* Ensure badge is on top */
+    z-index: 1;
 }
 
 .new-badge {
@@ -121,10 +88,74 @@ body {
     text-transform: uppercase;
 }
 
-.input-error {
-    border-color: #e74c3c !important;
+
+/* --- POPUP STYLES --- */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: flex-end; /* Align popup to the bottom */
+    justify-content: center;
+    z-index: 1000;
 }
 
-.label-error {
-    color: #e74c3c !important;
+.popup-overlay.hidden {
+    display: none;
 }
+
+.popup-content {
+    background-color: #f0f2f5;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    flex-direction: column;
+    animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-up {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #dcdcdc;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 12px 12px 0 0;
+}
+
+.popup-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.popup-footer {
+    padding: 16px;
+    border-top: 1px solid #dcdcdc;
+    flex-shrink: 0;
+    background: #fff;
+}
+
+.popup-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 12px 0;
+}
+
