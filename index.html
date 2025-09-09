@@ -17,13 +17,7 @@
     <div id="main-view" class="main-container">
         <!-- ===== View 1: Catalog ===== -->
         <div id="catalog-view" class="view active">
-            <div class="header p-4 flex items-center justify-between shadow-sm">
-                <div class="font-bold text-lg flex items-center">
-                    <span class="bg-red-500 text-white rounded-md w-7 h-7 flex items-center justify-center mr-2 font-bold">D</span>
-                    Durger King
-                </div>
-                <div></div> <!-- Placeholder for balance -->
-            </div>
+            <!-- Header is now handled by Telegram client -->
             <div id="catalog-grid" class="flex-grow p-4 grid grid-cols-2 gap-4 overflow-y-auto">
                 <!-- Product items will be injected here by JavaScript -->
             </div>
@@ -31,21 +25,17 @@
 
         <!-- ===== View 2: Your Order ===== -->
         <div id="order-view" class="view">
-            <div class="header p-4 flex items-center justify-between shadow-sm">
+             <div class="header p-4 flex items-center justify-between shadow-sm">
                  <div class="font-bold text-lg flex items-center">
                     <span class="bg-red-500 text-white rounded-md w-7 h-7 flex items-center justify-center mr-2 font-bold">D</span>
                     Durger King
                 </div>
-                <button class="text-green-600 font-semibold" id="edit-order-btn">Edit</button>
+                <button class="text-blue-500 font-semibold" id="edit-order-btn">Edit</button>
             </div>
             <div class="flex-grow p-4 overflow-y-auto">
                 <h2 class="text-xl font-bold mb-4">YOUR ORDER</h2>
                 <div id="order-list" class="space-y-4">
                     <!-- Order items will be injected here -->
-                </div>
-                <div class="mt-6">
-                    <label for="comment" class="text-gray-600">Add comment...</label>
-                    <textarea id="comment" rows="3" class="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Any special requests..."></textarea>
                 </div>
             </div>
         </div>
@@ -63,10 +53,10 @@
             <div class="popup-body">
                 <div class="bg-white p-4 rounded-lg shadow-sm">
                     <div class="flex items-center">
-                         <div class="lottie-emoji w-16 h-16 mr-4" data-tgs-url="https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/French%20Fries.tgs"></div>
+                         <div class="lottie-emoji w-16 h-16 mr-4" data-tgs-url="https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Hamburger.tgs"></div>
                         <div>
                             <p class="font-bold">Order #160546591</p>
-                            <p class="text-sm text-gray-500">Perfect Lunch from Durger King.</p>
+                            <p class="text-sm text-gray-500">Perfect lunch from Durger King.</p>
                         </div>
                     </div>
                     <div id="checkout-summary" class="mt-4 space-y-2 border-t pt-4"></div>
@@ -110,25 +100,19 @@
     <div id="payment-popup" class="popup-overlay hidden">
         <div class="popup-content">
             <div class="popup-header">
-                <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer" id="back-to-checkout-from-payment"></i>
+                <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer" data-target-popup="checkout-popup"></i>
                 <h2 class="text-lg font-bold">Payment info</h2>
                 <div class="w-5"></div>
             </div>
             <div class="popup-body">
-                <!-- Payment form content from original HTML -->
                 <p class="text-blue-600 font-semibold mb-2">Enter your card information</p>
-                <div class="space-y-4 mb-6">
+                 <div class="space-y-4 mb-6">
                     <input type="text" id="card-number" class="w-full p-3 border-2 rounded-lg" placeholder="Card Number">
                     <div class="flex space-x-4">
                         <input type="text" id="expiry-date" placeholder="MM/YY" class="w-1/2 p-3 border-2 rounded-lg">
                         <input type="password" id="cvc" placeholder="CVC" class="w-1/2 p-3 border-2 rounded-lg">
                     </div>
                     <input type="text" id="cardholder-name" placeholder="Cardholder Name" class="w-full p-3 border-2 rounded-lg">
-                </div>
-                 <p class="text-blue-600 font-semibold mb-2">Enter your billing address</p>
-                 <div class="space-y-4">
-                    <select id="country" class="w-full p-3 border-2 rounded-lg bg-white"><option value="">Select Country</option></select>
-                    <input type="text" id="postcode" placeholder="Postcode" class="w-full p-3 border-2 rounded-lg">
                 </div>
             </div>
             <div class="popup-footer">
@@ -141,12 +125,12 @@
     <div id="shipping-popup" class="popup-overlay hidden">
         <div class="popup-content">
              <div class="popup-header">
-                <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer" id="back-to-checkout-from-shipping"></i>
+                <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer" data-target-popup="checkout-popup"></i>
                 <h2 class="text-lg font-bold">Shipping Information</h2>
                 <div class="w-5"></div>
             </div>
              <div class="popup-body space-y-4">
-                <input type="text" id="shipping-address-1" placeholder="Address 1 (Street)" class="w-full p-3 border rounded-lg">
+                <input type="text" id="shipping-address-1" placeholder="Address" class="w-full p-3 border rounded-lg">
                 <input type="text" id="shipping-full-name" placeholder="Full Name" class="w-full p-3 border rounded-lg">
                 <input type="tel" id="shipping-phone-number" placeholder="Phone Number" class="w-full p-3 border rounded-lg">
              </div>
@@ -155,17 +139,23 @@
             </div>
         </div>
     </div>
-
-    <!-- Success Popup -->
-    <div id="success-popup" class="popup-overlay hidden">
-         <div class="popup-content text-center">
-             <div class="popup-body flex flex-col items-center justify-center">
-                <div class="lottie-emoji w-24 h-24 mb-6" data-tgs-url="https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Objects/Party%20Popper.tgs"></div>
-                <h2 class="text-2xl font-bold mb-2">Thank You!</h2>
-                <p class="text-gray-600 mb-8">Your order has been placed successfully.</p>
-                <button id="back-to-catalog-btn" class="btn-primary w-full max-w-xs">Back to Catalog</button>
+    
+    <!-- Stars Payment Popup -->
+    <div id="stars-popup" class="popup-overlay hidden">
+        <div class="popup-content">
+             <div class="popup-header">
+                <h2 class="text-lg font-bold">Confirm Purchase</h2>
+                <i class="fas fa-times text-xl text-gray-500 cursor-pointer" data-close-popup></i>
             </div>
-         </div>
+             <div class="popup-body text-center">
+                 <div id="stars-emoji-container" class="lottie-emoji w-24 h-24 mb-4"></div>
+                 <h3 id="stars-product-name" class="text-xl font-bold"></h3>
+                 <p class="text-gray-600 mb-6">Confirm purchase for 1 ⭐️</p>
+             </div>
+             <div class="popup-footer">
+                 <button id="confirm-star-payment-btn" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg">Pay 1 ⭐️</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
