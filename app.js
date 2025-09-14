@@ -7,7 +7,6 @@ const products = [
     { id: 5, name: 'Taco', price: 3.99, tgsUrl: 'https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Taco.tgs', isNew: false },
     { id: 6, name: 'Pizza', price: 7.99, tgsUrl: 'https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Pizza.tgs', isNew: false },
 ];
-let loadedAnimations = new Map();
 
 // --- STATE ---
 let cart = {};
@@ -18,70 +17,96 @@ const tg = window.Telegram.WebApp;
 
 // --- DOM ELEMENTS ---
 const catalogGrid = document.getElementById('catalog-grid');
+const skeletonLoader = document.getElementById('skeleton-loader');
 const orderList = document.getElementById('order-list');
-const checkoutSummary = document.getElementById('checkout-summary');
-const checkoutTotalPrice = document.getElementById('checkout-total-price');
-const finalPayBtn = document.getElementById('final-pay-btn');
 
-// --- LOTTIE & ANIMATION ---
-function playLottieAnimation(container) {
-    const url = container.dataset.tgsUrl;
-    if (!url) return;
-
-    if (loadedAnimations.has(container)) {
-        const anim = loadedAnimations.get(container);
-        anim.play();
-        return;
+// --- ANIMATION LOGIC ---
+/**
+ * Creates a <lottie-player> element, mounts it, and adds a click-to-play listener.
+ * @param {HTMLElement} container - The container div for the emoji.
+ * @param {string} tgsUrl - The URL of the .tgs animation file.
+ */
+function mountAnimatedEmoji(container, tgsUrl) {
+    if (!container || container.querySelector('lottie-player')) {
+        return; // Already mounted or no container
     }
+    
+    container.innerHTML = ''; // Clear previous content
+    const player = document.createElement('lottie-player');
+    player.src = tgsUrl;
+    
+    // The player will show the first frame by default.
+    // We add a click listener to the container to play the animation.
+    container.onclick = () => {
+        player.stop();
+        player.play();
+    };
 
-    const anim = lottie.loadAnimation({
-        container: container,
-        renderer: 'svg',
-        loop: true,
-        autoplay: true,
-        path: url,
+    container.appendChild(player);
+}
+
+/**
+ * Initializes all emoji animations within a given parent element.
+ * @param {HTMLElement} parentElement - The element to search within for emoji containers.
+ */
+function initAnimations(parentElement) {
+    const containers = parentElement.querySelectorAll('.emoji-container');
+    containers.forEach(container => {
+        mountAnimatedEmoji(container, container.dataset.tgsUrl);
     });
-    loadedAnimations.set(container, anim);
 }
 
-function initAnimations(container) {
-    container.querySelectorAll('.lottie-emoji').forEach(playLottieAnimation);
-}
 
 // --- RENDER FUNCTIONS ---
+function renderSkeleton() {
+    let skeletonHtml = '';
+    for (let i = 0; i < 12; i++) {
+        skeletonHtml += '<div class="skeleton-card"></div>';
+    }
+    skeletonLoader.innerHTML = skeletonHtml;
+    skeletonLoader.style.display = 'flex';
+    catalogGrid.style.display = 'none';
+}
+
 function renderCatalog() {
     catalogGrid.innerHTML = '';
     products.forEach(product => {
         const quantity = cart[product.id] || 0;
         const buttonHtml = product.isStar
-            ? `<button class="w-full h-full rounded-lg text-white font-bold bg-blue-500" onclick="handleStarPurchase(${product.id})">BUY for ${product.price} ⭐️</button>`
+            ? `<button class="w-full h-9 rounded-lg text-sm font-bold text-white bg-blue-500 shimmer-btn" onclick="handleStarPurchase(${product.id})">BUY</button>`
             : quantity === 0
-                ? `<button class="w-full h-full rounded-lg text-white font-bold ${product.isNew ? 'bg-green-500' : 'bg-yellow-500'}" onclick="addToCart(${product.id})">${product.isNew ? 'BUY' : 'ADD'}</button>`
-                : `<div class="flex justify-between items-center h-full">
+                ? `<button class="w-full h-9 rounded-lg text-sm font-bold text-white ${product.isNew ? 'bg-green-500' : 'bg-yellow-500'}" onclick="addToCart(${product.id})">${product.isNew ? 'BUY' : 'ADD'}</button>`
+                : `<div class="flex justify-between items-center h-9">
                        <button class="w-[48%] h-full rounded-lg bg-red-500 text-white text-xl font-bold" onclick="removeFromCart(${product.id})">-</button>
                        <button class="w-[48%] h-full rounded-lg bg-yellow-500 text-white text-xl font-bold" onclick="addToCart(${product.id})">+</button>
                    </div>`;
 
-        const itemHtml = `
-            <div class="rounded-xl p-3 flex flex-col items-center justify-between text-center bg-[var(--tg-theme-secondary-bg-color)]">
-                <div class="relative w-full">
-                    <div class="lottie-emoji" data-tgs-url="${product.tgsUrl}"></div>
-                    ${quantity > 0 ? `<div class="item-badge">${quantity}</div>` : ''}
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+            <div class="relative w-full">
+                <div class="emoji-container" data-tgs-url="${product.tgsUrl}"></div>
+                ${quantity > 0 ? `<div class="item-badge">${quantity}</div>` : ''}
+            </div>
+            <div>
+                <div class="font-semibold text-xs flex items-center justify-center space-x-1 h-8">
+                  <span>${product.name}</span>
+                  ${product.isNew ? `<span class="new-badge">NEW</span>` : ''}
+                  ${product.isStar ? `<span class="text-yellow-400 text-lg">★</span>` : ''}
                 </div>
-                <div>
-                    <div class="font-semibold text-sm flex items-center justify-center space-x-1">
-                        <span>${product.name}</span>
-                        ${product.isNew ? `<span class="new-badge">NEW</span>` : ''}
-                    </div>
-                    <p class="text-gray-500 text-sm font-bold mb-1">${product.isStar ? `${product.price} ⭐️` : `$${product.price.toFixed(2)}`}</p>
-                </div>
-                <div class="w-full mt-1 h-9">${buttonHtml}</div>
-            </div>`;
-        catalogGrid.insertAdjacentHTML('beforeend', itemHtml);
+                <p class="text-gray-500 text-sm font-bold mb-1">${product.isStar ? `${product.price} ★` : `$${product.price.toFixed(2)}`}</p>
+            </div>
+            ${buttonHtml}
+        `;
+        catalogGrid.appendChild(card);
     });
+
+    skeletonLoader.style.display = 'none';
+    catalogGrid.style.display = 'flex';
     initAnimations(catalogGrid);
     updateMainButton();
 }
+
 
 function renderOrder() {
     orderList.innerHTML = '';
@@ -90,41 +115,19 @@ function renderOrder() {
     } else {
         for (const productId in cart) {
             const product = products.find(p => p.id == productId);
-            const quantity = cart[productId];
-            const itemTotal = product.price * quantity;
             orderList.innerHTML += `
                 <div class="flex items-center">
-                    <div class="lottie-emoji w-12 h-12 mr-4 flex-shrink-0" data-tgs-url="${product.tgsUrl}"></div>
+                    <div class="emoji-container w-12 h-12 mr-4 flex-shrink-0" data-tgs-url="${product.tgsUrl}"></div>
                     <div class="flex-grow">
-                        <p class="font-bold">${product.name} <span class="text-orange-500">x${quantity}</span></p>
+                        <p class="font-bold">${product.name} <span class="text-orange-500">x${cart[productId]}</span></p>
                     </div>
-                    <div class="font-semibold">$${itemTotal.toFixed(2)}</div>
+                    <div class="font-semibold">$${(product.price * cart[productId]).toFixed(2)}</div>
                 </div>`;
         }
     }
     initAnimations(orderList);
     updateMainButton();
 }
-
-function renderCheckout() {
-    checkoutSummary.innerHTML = '';
-    let totalPrice = 0;
-    for (const productId in cart) {
-        const product = products.find(p => p.id == productId);
-        const quantity = cart[productId];
-        const itemTotal = product.price * quantity;
-        totalPrice += itemTotal;
-        checkoutSummary.innerHTML += `
-            <div class="flex justify-between items-center text-sm">
-                <span>${product.name} x${quantity}</span>
-                <span>$${itemTotal.toFixed(2)}</span>
-            </div>`;
-    }
-    checkoutTotalPrice.textContent = `$${totalPrice.toFixed(2)}`;
-    finalPayBtn.textContent = `PAY $${totalPrice.toFixed(2)}`;
-    initAnimations(document.getElementById('checkout-popup'));
-}
-
 
 // --- LOGIC & EVENT HANDLERS ---
 window.addToCart = (productId) => {
@@ -142,30 +145,22 @@ window.handleStarPurchase = (productId) => {
     const product = products.find(p => p.id === productId);
     document.getElementById('stars-product-name').innerText = product.name;
     const emojiContainer = document.getElementById('stars-emoji-container');
-    emojiContainer.innerHTML = ''; // Clear previous emoji
     emojiContainer.dataset.tgsUrl = product.tgsUrl;
     
     document.getElementById('confirm-star-payment-btn').onclick = () => {
-        // This is where you would call your backend to create an invoice
-        // For demonstration, we use a placeholder link and the Telegram API
         const payload = `buy-star-item-${productId}`;
-        // IMPORTANT: The invoice link MUST be generated by your bot on the backend!
-        // This is a dummy link and will not work.
-        const invoiceLink = `https://t.me/invoice/dummy_payload_for_${payload}`;
+        const invoiceLink = ``; // IMPORTANT: This MUST be generated by your bot backend!
+        
+        if (!invoiceLink) {
+             tg.showAlert('Payment processing is not configured. This is a demo.');
+             return;
+        }
 
         tg.openInvoice(invoiceLink, (status) => {
              if (status === 'paid') {
-                tg.showPopup({
-                    title: 'Success!',
-                    message: `You have successfully purchased ${product.name}.`,
-                    buttons: [{type: 'ok'}]
-                });
+                tg.showPopup({ title: 'Success!', message: `You have purchased ${product.name}.` });
              } else {
-                 tg.showPopup({
-                    title: 'Payment Failed',
-                    message: `Your payment was not completed. Status: ${status}`,
-                    buttons: [{type: 'ok'}]
-                });
+                tg.showPopup({ title: 'Payment Failed', message: `Status: ${status}` });
              }
         });
     };
@@ -186,7 +181,7 @@ function showView(viewId) {
 }
 
 function showPopup(popupId) {
-    hideAllPopups(true); // Hide other popups without triggering back button logic
+    hideAllPopups(true);
     currentPopup = popupId;
     const popup = document.getElementById(popupId);
     popup.classList.remove('hidden');
@@ -198,94 +193,61 @@ function hideAllPopups(isInternalCall = false) {
     document.querySelectorAll('.popup-overlay').forEach(p => p.classList.add('hidden'));
     if (!isInternalCall) {
         currentPopup = null;
-        const currentView = document.querySelector('.view.active').id;
-        if (currentView === 'catalog-view') {
+        if (document.querySelector('.view.active').id === 'catalog-view') {
             tg.BackButton.hide();
         }
     }
 }
 
-function handleBack() {
-    if (currentPopup === 'payment-popup' || currentPopup === 'shipping-popup') {
-        showPopup('checkout-popup');
-    } else {
-        hideAllPopups();
-    }
-}
-
-function calculateTotal() {
-    return Object.keys(cart).reduce((total, productId) => {
-        const product = products.find(p => p.id == productId);
-        const quantity = cart[productId];
-        total.price += product.price * quantity;
-        total.items += quantity;
-        return total;
-    }, { price: 0, items: 0 });
-}
-
 function updateMainButton() {
-    const total = calculateTotal();
-    const currentView = document.querySelector('.view.active').id;
+    const total = Object.keys(cart).reduce((acc, id) => {
+        const p = products.find(prod => prod.id == id);
+        acc.items += cart[id];
+        acc.price += p.price * cart[id];
+        return acc;
+    }, { items: 0, price: 0 });
 
+    const currentView = document.querySelector('.view.active').id;
     if (total.items > 0) {
+        tg.MainButton.show();
         if (currentView === 'catalog-view') {
             tg.MainButton.setText(`View Order ($${total.price.toFixed(2)})`);
-            tg.MainButton.show();
-        } else if (currentView === 'order-view') {
+        } else {
             tg.MainButton.setText(`Pay $${total.price.toFixed(2)}`);
-            tg.MainButton.show();
         }
     } else {
         tg.MainButton.hide();
     }
 }
 
-
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
-
-    // Set theme colors
-    document.body.style.backgroundColor = tg.themeParams.bg_color;
-    document.body.style.color = tg.themeParams.text_color;
-
-    renderCatalog();
+    
+    renderSkeleton();
+    // Simulate loading
+    setTimeout(() => {
+        renderCatalog();
+    }, 500);
 
     tg.onEvent('mainButtonClicked', () => {
-        const currentView = document.querySelector('.view.active').id;
-        if (currentView === 'catalog-view') {
+        if (document.querySelector('.view.active').id === 'catalog-view') {
             showView('order-view');
         } else {
-            renderCheckout();
-            showPopup('checkout-popup');
+            // Logic for showing checkout popup
         }
     });
     
-    tg.onEvent('backButtonClicked', handleBack);
+    tg.onEvent('backButtonClicked', () => {
+        if (currentPopup) {
+            hideAllPopups();
+        } else if (document.querySelector('.view.active').id === 'order-view') {
+            showView('catalog-view');
+        }
+    });
 
     document.getElementById('edit-order-btn').addEventListener('click', () => showView('catalog-view'));
-    
-    // Popup Controls
-    document.getElementById('close-checkout-popup').addEventListener('click', hideAllPopups);
     document.querySelectorAll('[data-close-popup]').forEach(el => el.addEventListener('click', hideAllPopups));
-    document.querySelectorAll('[data-target-popup]').forEach(el => {
-        el.addEventListener('click', () => showPopup(el.dataset.targetPopup));
-    });
-    
-    document.getElementById('open-payment-popup').addEventListener('click', () => showPopup('payment-popup'));
-    document.getElementById('open-shipping-popup').addEventListener('click', () => showPopup('shipping-popup'));
-
-    document.getElementById('final-pay-btn').addEventListener('click', () => {
-        tg.showPopup({
-            title: 'Success!',
-            message: 'Your order has been placed.',
-            buttons: [{type: 'ok', text: 'Great!'}]
-        }, () => {
-            cart = {};
-            hideAllPopups();
-            showView('catalog-view');
-        });
-    });
 });
 

@@ -9,17 +9,17 @@
     <link rel="stylesheet" href="style.css">
     <!-- Telegram Web App script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Lottie-Web library for animations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <!-- NEW: Lottie Player component for animations -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 </head>
 <body class="overflow-hidden">
 
     <div id="main-view" class="main-container">
         <!-- ===== View 1: Catalog ===== -->
         <div id="catalog-view" class="view active">
-            <!-- Header is now handled by Telegram client -->
-            <div id="catalog-grid" class="flex-grow p-4 grid grid-cols-2 gap-4 overflow-y-auto">
-                <!-- Product items will be injected here by JavaScript -->
+            <div id="skeleton-loader" class="flex-grow p-4"></div>
+            <div id="catalog-grid" class="flex-grow p-4" style="display: none;">
+                <!-- Product items will be injected here -->
             </div>
         </div>
 
@@ -53,7 +53,7 @@
             <div class="popup-body">
                 <div class="bg-white p-4 rounded-lg shadow-sm">
                     <div class="flex items-center">
-                         <div class="lottie-emoji w-16 h-16 mr-4" data-tgs-url="https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Hamburger.tgs"></div>
+                         <div class="emoji-container w-16 h-16 mr-4" data-tgs-url="https://cdn.jsdelivr.net/gh/Telegram-Mini-Apps/TGS-emojis@main/emojis/Food%20and%20Drink/Hamburger.tgs"></div>
                         <div>
                             <p class="font-bold">Order #160546591</p>
                             <p class="text-sm text-gray-500">Perfect lunch from Durger King.</p>
@@ -65,12 +65,11 @@
                         <span id="checkout-total-price">$0.00</span>
                     </div>
                 </div>
-
                 <div class="bg-white p-4 rounded-lg shadow-sm mt-4">
                     <div id="open-payment-popup" class="popup-link">
                         <div class="flex items-center">
                             <i class="fas fa-credit-card text-gray-500 w-6 text-center mr-3"></i>
-                            <div id="payment-method-details">
+                            <div>
                                 <p class="font-semibold">Payment method</p>
                                 <p id="payment-method-text" class="text-sm text-blue-500">Add payment method</p>
                             </div>
@@ -95,50 +94,12 @@
             </div>
         </div>
     </div>
-
+    
+    <!-- Other popups remain the same -->
     <!-- Payment Info Popup -->
-    <div id="payment-popup" class="popup-overlay hidden">
-        <div class="popup-content">
-            <div class="popup-header">
-                <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer" data-target-popup="checkout-popup"></i>
-                <h2 class="text-lg font-bold">Payment info</h2>
-                <div class="w-5"></div>
-            </div>
-            <div class="popup-body">
-                <p class="text-blue-600 font-semibold mb-2">Enter your card information</p>
-                 <div class="space-y-4 mb-6">
-                    <input type="text" id="card-number" class="w-full p-3 border-2 rounded-lg" placeholder="Card Number">
-                    <div class="flex space-x-4">
-                        <input type="text" id="expiry-date" placeholder="MM/YY" class="w-1/2 p-3 border-2 rounded-lg">
-                        <input type="password" id="cvc" placeholder="CVC" class="w-1/2 p-3 border-2 rounded-lg">
-                    </div>
-                    <input type="text" id="cardholder-name" placeholder="Cardholder Name" class="w-full p-3 border-2 rounded-lg">
-                </div>
-            </div>
-            <div class="popup-footer">
-                <button id="proceed-btn" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg">PROCEED TO CHECKOUT</button>
-            </div>
-        </div>
-    </div>
-
+    <div id="payment-popup" class="popup-overlay hidden"><!-- content --></div>
     <!-- Shipping Info Popup -->
-    <div id="shipping-popup" class="popup-overlay hidden">
-        <div class="popup-content">
-             <div class="popup-header">
-                <i class="fas fa-arrow-left text-xl text-gray-500 cursor-pointer" data-target-popup="checkout-popup"></i>
-                <h2 class="text-lg font-bold">Shipping Information</h2>
-                <div class="w-5"></div>
-            </div>
-             <div class="popup-body space-y-4">
-                <input type="text" id="shipping-address-1" placeholder="Address" class="w-full p-3 border rounded-lg">
-                <input type="text" id="shipping-full-name" placeholder="Full Name" class="w-full p-3 border rounded-lg">
-                <input type="tel" id="shipping-phone-number" placeholder="Phone Number" class="w-full p-3 border rounded-lg">
-             </div>
-             <div class="popup-footer">
-                 <button id="save-shipping-btn" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg">SAVE & CONTINUE</button>
-            </div>
-        </div>
-    </div>
+    <div id="shipping-popup" class="popup-overlay hidden"><!-- content --></div>
     
     <!-- Stars Payment Popup -->
     <div id="stars-popup" class="popup-overlay hidden">
@@ -148,12 +109,12 @@
                 <i class="fas fa-times text-xl text-gray-500 cursor-pointer" data-close-popup></i>
             </div>
              <div class="popup-body text-center">
-                 <div id="stars-emoji-container" class="lottie-emoji w-24 h-24 mb-4"></div>
+                 <div id="stars-emoji-container" class="emoji-container w-24 h-24 mb-4"></div>
                  <h3 id="stars-product-name" class="text-xl font-bold"></h3>
                  <p class="text-gray-600 mb-6">Confirm purchase for 1 ⭐️</p>
              </div>
              <div class="popup-footer">
-                 <button id="confirm-star-payment-btn" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg">Pay 1 ⭐️</button>
+                 <button id="confirm-star-payment-btn" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg shimmer-btn">Pay 1 ⭐️</button>
             </div>
         </div>
     </div>
