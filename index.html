@@ -291,9 +291,9 @@
         };
         
         const modals = {
-            checkout: document.getElementById('checkout-modal'),
-            paymentInfo: document.getElementById('payment-info-modal'),
-            shippingInfo: document.getElementById('shipping-info-modal'),
+            'checkout-modal': document.getElementById('checkout-modal'),
+            'payment-info-modal': document.getElementById('payment-info-modal'),
+            'shipping-info-modal': document.getElementById('shipping-info-modal'),
         };
 
         // --- RENDER FUNCTIONS ---
@@ -414,11 +414,21 @@
 
         // --- MODAL LOGIC ---
         function openModal(modalName) {
-            modals[modalName].classList.add('visible');
+            const modal = modals[modalName];
+            if (modal) {
+                modal.classList.add('visible');
+            } else {
+                console.error(`Modal with name "${modalName}" not found.`);
+            }
         }
 
         function closeModal(modalName) {
-            modals[modalName].classList.remove('visible');
+            const modal = modals[modalName];
+            if (modal) {
+                modal.classList.remove('visible');
+            } else {
+                console.error(`Modal with name "${modalName}" not found.`);
+            }
         }
         
         function renderCheckoutSummary() {
@@ -543,7 +553,7 @@
                 
                 if (regularItems.length > 0) {
                     renderCheckoutSummary();
-                    openModal('checkout');
+                    openModal('checkout-modal');
                 }
             });
 
@@ -611,3 +621,4 @@
     </script>
 </body>
 </html>
+
