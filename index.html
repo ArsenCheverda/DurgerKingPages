@@ -277,16 +277,16 @@
                 <div class="space-y-4 mb-6">
                     <div>
                         <label for="card-number" class="text-sm font-medium text-gray-700">Номер картки</label>
-                        <input type="text" id="card-number" class="w-full mt-1 p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0000 0000 0000 0000">
+                        <input type="text" id="card-number" class="w-full mt-1 p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19">
                     </div>
                     <div class="flex space-x-4">
                         <div class="w-1/2">
                             <label for="expiry-date" class="text-sm font-medium text-gray-700">Термін дії</label>
-                            <input type="text" id="expiry-date" placeholder="ММ/РР" class="w-full mt-1 p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <input type="text" id="expiry-date" placeholder="ММ/РР" class="w-full mt-1 p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" inputmode="numeric" maxlength="5">
                         </div>
                         <div class="w-1/2">
                             <label for="cvc" class="text-sm font-medium text-gray-700">CVC</label>
-                            <input type="password" id="cvc" placeholder="•••" class="w-full mt-1 p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <input type="password" id="cvc" placeholder="•••" class="w-full mt-1 p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" inputmode="numeric" maxlength="3">
                         </div>
                     </div>
                     <div>
@@ -308,7 +308,7 @@
             <div class="flex-grow p-4 overflow-y-auto space-y-4">
                  <h3 class="font-semibold pt-4">Отримувач</h3>
                 <input type="text" id="shipping-full-name" placeholder="Повне ім'я" class="w-full p-3 border rounded-lg">
-                <input type="tel" id="shipping-phone-number" placeholder="Номер телефону" class="w-full p-3 border rounded-lg">
+                <input type="tel" id="shipping-phone-number" placeholder="Номер телефону" class="w-full p-3 border rounded-lg" inputmode="numeric">
                 <h3 class="font-semibold pt-4">Адреса</h3>
                 <input type="text" id="shipping-address-1" placeholder="Вулиця, будинок" class="w-full p-3 border rounded-lg">
                 <input type="text" placeholder="Квартира, офіс (необов'язково)" class="w-full p-3 border rounded-lg">
@@ -542,6 +542,23 @@
             closeStarModal();
         }
         
+        function validateExpiryDate(value) {
+            if (value.length !== 5) return false;
+            const [month, year] = value.split('/');
+            if (!month || !year) return false;
+            const expMonth = parseInt(month, 10);
+            const expYear = parseInt(year, 10) + 2000;
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth() + 1;
+
+            if (isNaN(expMonth) || isNaN(expYear)) return false;
+            if (expMonth < 1 || expMonth > 12) return false;
+            if (expYear < currentYear) return false;
+            if (expYear === currentYear && expMonth < currentMonth) return false;
+            
+            return true;
+        }
+
         function validateShippingForm() {
             const name = shippingFullNameInput.value.trim();
             const phone = shippingPhoneInput.value.trim();
@@ -558,15 +575,29 @@
         }
         
         function validatePaymentForm() {
-            // Проста імітація валідації
-            const cardNumber = document.getElementById('card-number').value;
-            if (cardNumber && cardNumber.length > 10) { // Дуже базова перевірка
+            const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+            const expiryDate = document.getElementById('expiry-date').value;
+            const cvc = document.getElementById('cvc').value;
+            const cardholderName = document.getElementById('cardholder-name').value;
+
+            if (cardNumber.length === 16 && validateExpiryDate(expiryDate) && cvc.length === 3 && cardholderName.trim() !== '') {
                 isPaymentInfoFilled = true;
                 paymentMethodText.textContent = `Карта **** ${cardNumber.slice(-4)}`;
                 paymentMethodText.classList.remove('text-blue-500');
                 return true;
             } else {
-                tg.showAlert('Будь ласка, введіть коректний номер картки.');
+                let error = 'Будь ласка, заповніть всі платіжні дані коректно.';
+                if (cardNumber.length !== 16) {
+                    error = 'Номер картки має містити 16 цифр.';
+                } else if (!validateExpiryDate(expiryDate)) {
+                    error = 'Некоректний або минулий термін дії картки.';
+                } else if (cvc.length !== 3) {
+                    error = 'CVC код має містити 3 цифри.';
+                } else if (cardholderName.trim() === '') {
+                    error = "Будь ласка, вкажіть ім'я власника картки.";
+                }
+                
+                tg.showAlert(error);
                 return false;
             }
         }
@@ -694,7 +725,34 @@
                 const user = tg.initDataUnsafe.user;
                 shippingFullNameInput.value = [user.first_name, user.last_name].filter(Boolean).join(' ');
             }
+
+            // Обробники для форматування полів вводу
+            const cardNumberInput = document.getElementById('card-number');
+            const expiryDateInput = document.getElementById('expiry-date');
+            const cvcInput = document.getElementById('cvc');
+
+            cardNumberInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                e.target.value = value.replace(/(\d{4})/g, '$1 ').trim();
+            });
+
+            expiryDateInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    value = value.slice(0, 2) + '/' + value.slice(2);
+                }
+                e.target.value = value;
+            });
+
+            cvcInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+
+            shippingPhoneInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
         });
     </script>
 </body>
 </html>
+
